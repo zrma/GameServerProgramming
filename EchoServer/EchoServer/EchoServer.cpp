@@ -32,8 +32,8 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	printf_s( "Server Start \n" );
 
-	MSG	msg = { 0, };
-	DWORD result = 0;
+	MSG		msg = { 0, };
+	DWORD	result = 0;
 
 	while ( result = GetMessage( &msg, NULL, 0, 0 ) )
 	{
@@ -56,16 +56,16 @@ HWND MakeHiddenWindow( void )
 	WNDCLASS	wndclass;
 	HWND		hWnd = nullptr;
 
-	wndclass.style = CS_HREDRAW | CS_VREDRAW;
-	wndclass.lpfnWndProc = (WNDPROC)WindowProc;
-	wndclass.cbClsExtra = 0;
-	wndclass.cbWndExtra = 0;
-	wndclass.hInstance = NULL;
-	wndclass.hIcon = LoadIcon( NULL, IDI_APPLICATION );
-	wndclass.hCursor = LoadCursor( NULL, IDC_ARROW );
-	wndclass.hbrBackground = (HBRUSH)GetStockObject( WHITE_BRUSH );
-	wndclass.lpszMenuName = NULL;
-	wndclass.lpszClassName = (LPCWSTR)WINDOW_NAME;
+	wndclass.style			= CS_HREDRAW | CS_VREDRAW;
+	wndclass.lpfnWndProc	= (WNDPROC)WindowProc;
+	wndclass.cbClsExtra		= 0;
+	wndclass.cbWndExtra		= 0;
+	wndclass.hInstance		= NULL;
+	wndclass.hIcon			= LoadIcon( NULL, IDI_APPLICATION );
+	wndclass.hCursor		= LoadCursor( NULL, IDC_ARROW );
+	wndclass.hbrBackground	= (HBRUSH)GetStockObject( WHITE_BRUSH );
+	wndclass.lpszMenuName	= NULL;
+	wndclass.lpszClassName	= (LPCWSTR)WINDOW_NAME;
 
 	if ( 0 == RegisterClass( &wndclass ))
 	{
@@ -151,8 +151,8 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 {
 	if ( WSAGETSELECTERROR( lParam ) )
 	{
-		SOCKADDR_IN addr;
-		int len = sizeof( SOCKADDR_IN );
+		SOCKADDR_IN	addr;
+		int			len = sizeof( SOCKADDR_IN );
 
 		if ( -1 == getsockname( wParam, (sockaddr *)&addr, &len ) )
 		{
@@ -171,18 +171,18 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 	}
 	else
 	{
-		char inBuf[BUF_SIZE] = { 0, };
-		int recvLen = 0;
+		char	inBuf[BUF_SIZE] = { 0, };
+		int		recvLen = 0;
 
 		switch ( WSAGETSELECTEVENT( lParam ) )
 		{
 			case FD_ACCEPT:
 			{
-				SOCKET s;
-				SOCKADDR_IN addr;
+				SOCKET		acceptedSocket;
+				SOCKADDR_IN	addr;
 				int addrlen = sizeof( addr );
 
-				if ( INVALID_SOCKET == ( s = accept( wParam, (SOCKADDR*)&addr, &addrlen ) ) )
+				if ( INVALID_SOCKET == ( acceptedSocket = accept( wParam, (SOCKADDR*)&addr, &addrlen ) ) )
 				{
 					printf_s( "Accept() Failed with Error %d\n", WSAGetLastError() );
 					break;
@@ -191,7 +191,7 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 				{
 					printf_s( "[Debug] Connected IP:[%s] Port:[%d] \n", inet_ntoa( addr.sin_addr ), ntohs(addr.sin_port) );
 					
-					WSAAsyncSelect( s, g_hWnd, WM_SOCKET, FD_READ | FD_WRITE | FD_CLOSE );
+					WSAAsyncSelect( acceptedSocket, g_hWnd, WM_SOCKET, FD_READ | FD_WRITE | FD_CLOSE );
 				}
 			}
 				break;
@@ -215,8 +215,8 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 
 			case FD_CLOSE:
 			{
-				SOCKADDR_IN addr;
-				int len = sizeof( SOCKADDR_IN );
+				SOCKADDR_IN	addr;
+				int			len = sizeof( SOCKADDR_IN );
 
 				if ( -1 == getsockname( wParam, (sockaddr *)&addr, &len ) )
 				{
