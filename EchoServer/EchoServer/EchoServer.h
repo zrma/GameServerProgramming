@@ -8,6 +8,7 @@ bool				MakeHiddenWindow( void );
 LRESULT CALLBACK	WindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
 bool				InitNetwork();
+void				DestroyNetwork();
 bool				HandleMessage( WPARAM wParam, LPARAM lParam );
 
 extern SOCKET		g_ListenSocket;

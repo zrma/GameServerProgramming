@@ -46,6 +46,8 @@ int _tmain( int argc, _TCHAR* argv[] )
 		DispatchMessage( &msg );
 	}
 
+	DestroyNetwork();
+
 	return 0;
 }
 
@@ -142,6 +144,11 @@ bool InitNetwork()
 	}
 
 	return true;
+}
+
+void DestroyNetwork()
+{
+	WSACleanup();
 }
 
 bool HandleMessage( WPARAM wParam, LPARAM lParam )
