@@ -106,7 +106,7 @@ bool InitNetwork()
 	SOCKADDR_IN	addr;
 	WSADATA		wsaData;
 
-	if ( WSAStartup( ( 2, 2 ), &wsaData ) != 0 )
+	if ( 0 != WSAStartup( ( 2, 2 ), &wsaData ) )
 	{
 		printf_s( "WSAStartup() Failed with Error Code %d \n", WSAGetLastError() );
 		return false;
