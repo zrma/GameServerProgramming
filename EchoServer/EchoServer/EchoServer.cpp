@@ -104,7 +104,7 @@ LRESULT CALLBACK WindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam 
 
 bool InitNetwork()
 {
-	SOCKADDR_IN addr;
+	SOCKADDR_IN	addr;
 	WSADATA		wsaData;
 
 	if ( WSAStartup( ( 2, 2 ), &wsaData ) != 0 )
@@ -171,7 +171,7 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 	}
 	else
 	{
-		char inBuf[4096] = { 0, };
+		char inBuf[BUF_SIZE] = { 0, };
 		int recvLen = 0;
 
 		switch ( WSAGETSELECTEVENT( lParam ) )
@@ -199,7 +199,7 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 			case FD_READ:
 			{
 				ZeroMemory( inBuf, sizeof( inBuf ) );
-				recvLen = recv( wParam, inBuf, 4096, 0 );
+				recvLen = recv( wParam, inBuf, BUF_SIZE, 0 );
 
 				if ( SOCKET_ERROR == recvLen )
 				{
