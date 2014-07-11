@@ -4,7 +4,7 @@
 #define PORT		9001
 #define BUF_SIZE	4096
 
-HWND				MakeHiddenWindow( void );
+bool				MakeHiddenWindow( void );
 LRESULT CALLBACK	WindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
 bool				InitNetwork();

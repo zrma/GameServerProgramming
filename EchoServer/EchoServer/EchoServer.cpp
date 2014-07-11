@@ -10,11 +10,9 @@ HWND			g_hWnd = nullptr;
 SOCKET			g_ListenSocket = NULL;
 const WCHAR		WINDOW_NAME[] = L"EchoServer";
 
-int _tmain(int argc, _TCHAR* argv[])
+int _tmain( int argc, _TCHAR* argv[] )
 {
-	g_hWnd = MakeHiddenWindow();
-
-	if ( !g_hWnd )
+	if ( !MakeHiddenWindow() )
 	{
 		printf_s( "Press Any Key \n" );
 		getchar();
@@ -51,36 +49,35 @@ int _tmain(int argc, _TCHAR* argv[])
 	return 0;
 }
 
-HWND MakeHiddenWindow( void )
+bool MakeHiddenWindow( void )
 {
 	WNDCLASS	wndclass;
-	HWND		hWnd = nullptr;
+	
+	wndclass.style = CS_HREDRAW | CS_VREDRAW;
+	wndclass.lpfnWndProc = (WNDPROC)WindowProc;
+	wndclass.cbClsExtra = 0;
+	wndclass.cbWndExtra = 0;
+	wndclass.hInstance = NULL;
+	wndclass.hIcon = LoadIcon( NULL, IDI_APPLICATION );
+	wndclass.hCursor = LoadCursor( NULL, IDC_ARROW );
+	wndclass.hbrBackground = (HBRUSH)GetStockObject( WHITE_BRUSH );
+	wndclass.lpszMenuName = NULL;
+	wndclass.lpszClassName = (LPCWSTR)WINDOW_NAME;
 
-	wndclass.style			= CS_HREDRAW | CS_VREDRAW;
-	wndclass.lpfnWndProc	= (WNDPROC)WindowProc;
-	wndclass.cbClsExtra		= 0;
-	wndclass.cbWndExtra		= 0;
-	wndclass.hInstance		= NULL;
-	wndclass.hIcon			= LoadIcon( NULL, IDI_APPLICATION );
-	wndclass.hCursor		= LoadCursor( NULL, IDC_ARROW );
-	wndclass.hbrBackground	= (HBRUSH)GetStockObject( WHITE_BRUSH );
-	wndclass.lpszMenuName	= NULL;
-	wndclass.lpszClassName	= (LPCWSTR)WINDOW_NAME;
-
-	if ( 0 == RegisterClass( &wndclass ))
+	if ( 0 == RegisterClass( &wndclass ) )
 	{
 		printf_s( "RegisterClass() Failed with Error Code %d \n", GetLastError() );
-		return nullptr;
+		return false;
 	}
 
-	if ( nullptr == ( hWnd = CreateWindow( (LPCWSTR)WINDOW_NAME, WINDOW_NAME, WS_OVERLAPPEDWINDOW,
+	if ( nullptr == ( g_hWnd = CreateWindow( (LPCWSTR)WINDOW_NAME, WINDOW_NAME, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL ) ) )
 	{
 		printf_s( "CreateWindow() Failed with Error Code %d\n", GetLastError() );
-		return nullptr;
+		return false;
 	}
 
-	return hWnd;
+	return true;
 }
 
 LRESULT CALLBACK WindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
@@ -92,7 +89,7 @@ LRESULT CALLBACK WindowProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam 
 			HandleMessage( wParam, lParam );
 		}
 			return 0;
-		
+
 		case WM_DESTROY:
 		{
 			PostQuitMessage( 0 );
@@ -180,7 +177,7 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 			{
 				SOCKET		acceptedSocket;
 				SOCKADDR_IN	addr;
-				int addrlen = sizeof( addr );
+				int			addrlen = sizeof( addr );
 
 				if ( INVALID_SOCKET == ( acceptedSocket = accept( wParam, (SOCKADDR*)&addr, &addrlen ) ) )
 				{
@@ -189,8 +186,8 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 				}
 				else
 				{
-					printf_s( "[Debug] Connected IP:[%s] Port:[%d] \n", inet_ntoa( addr.sin_addr ), ntohs(addr.sin_port) );
-					
+					printf_s( "[Debug] Connected IP:[%s] Port:[%d] \n", inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ) );
+
 					WSAAsyncSelect( acceptedSocket, g_hWnd, WM_SOCKET, FD_READ | FD_WRITE | FD_CLOSE );
 				}
 			}
