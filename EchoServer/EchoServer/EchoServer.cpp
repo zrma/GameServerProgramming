@@ -3,6 +3,8 @@
 
 #include "stdafx.h"
 #include "EchoServer.h"
+#include "SessionManager.h"
+#include "Session.h"
 
 #pragma comment(lib,"ws2_32.lib")
 
@@ -28,6 +30,8 @@ int _tmain( int argc, _TCHAR* argv[] )
 		return 0;
 	}
 
+	g_SessionManager = new SessionManager();
+
 	printf_s( "Server Start \n" );
 
 	MSG		msg = { 0, };
@@ -44,6 +48,12 @@ int _tmain( int argc, _TCHAR* argv[] )
 
 		TranslateMessage( &msg );
 		DispatchMessage( &msg );
+	}
+
+	if ( g_SessionManager )
+	{
+		delete g_SessionManager;
+		g_SessionManager = nullptr;
 	}
 
 	DestroyNetwork();
@@ -168,8 +178,7 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 					  inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ), WSAGETSELECTERROR( lParam ) );
 		}
 
-		shutdown( wParam, SD_BOTH );
-		closesocket( wParam );
+		g_SessionManager->DestroySession( wParam );
 
 		return false;
 	}
@@ -196,24 +205,47 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 					printf_s( "[Debug] Connected IP:[%s] Port:[%d] \n", inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ) );
 
 					WSAAsyncSelect( acceptedSocket, g_hWnd, WM_SOCKET, FD_READ | FD_WRITE | FD_CLOSE );
+					g_SessionManager->CreateSession( acceptedSocket );
 				}
 			}
 				break;
 
 			case FD_READ:
 			{
-				ZeroMemory( inBuf, sizeof( inBuf ) );
-				recvLen = recv( wParam, inBuf, BUF_SIZE, 0 );
+				Session* session = g_SessionManager->FindSession( wParam );
 
-				if ( SOCKET_ERROR == recvLen )
+				if ( session )
 				{
-					break;
+					if ( session->Recv() )
+					{
+						PostMessage( g_hWnd, WM_SOCKET, wParam, FD_WRITE );
+					}
+				}
+				else
+				{
+					g_SessionManager->DestroySession( wParam );
 				}
 			}
+				break;
 
 			case FD_WRITE:
 			{
-				int sent = send( wParam, inBuf, recvLen, 0 );
+				Session* session = g_SessionManager->FindSession( wParam );
+
+				if ( session )
+				{
+					if ( session->Send() )
+					{
+						if ( session->HasDregs() )
+						{
+							PostMessage( g_hWnd, WM_SOCKET, wParam, FD_WRITE );
+						}
+					}
+				}
+				else
+				{
+					g_SessionManager->DestroySession( wParam );
+				}
 			}
 				break;
 
@@ -224,15 +256,14 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 
 				if ( -1 == getsockname( wParam, (sockaddr *)&addr, &len ) )
 				{
-					printf_s( "Get Socket Name Failed with Error Code %d \n", WSAGetLastError() );
+					printf_s( "FD_CLOSE Get Socket Name Failed with Error Code %d \n", WSAGetLastError() );
 				}
 				else
 				{
-					printf_s( "[Debug] Connection Closed IP:[%s] Port:[%d] \n", inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ) );
+					printf_s( "[Debug] FD_CLOSE Connection Closed IP:[%s] Port:[%d] \n", inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ) );
 				}
 
-				shutdown( wParam, SD_BOTH );
-				closesocket( wParam );
+				g_SessionManager->DestroySession( wParam );
 			}
 				break;
 		}
