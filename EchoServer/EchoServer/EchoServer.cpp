@@ -168,11 +168,7 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 		SOCKADDR_IN	addr;
 		int			len = sizeof( SOCKADDR_IN );
 
-		if ( -1 == getsockname( wParam, (sockaddr *)&addr, &len ) )
-		{
-			printf_s( "Get Socket Name Failed with Error Code %d \n", WSAGetLastError() );
-		}
-		else
+		if ( -1 != getsockname( wParam, (sockaddr *)&addr, &len ) )
 		{
 			printf_s( "[Debug] Connection Closed IP:[%s] Port:[%d] with Error Code %d \n",
 					  inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ), WSAGETSELECTERROR( lParam ) );
@@ -220,6 +216,19 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 					{
 						PostMessage( g_hWnd, WM_SOCKET, wParam, FD_WRITE );
 					}
+					else
+					{
+						SOCKADDR_IN	addr;
+						int			len = sizeof( SOCKADDR_IN );
+
+						if ( -1 != getsockname( wParam, (sockaddr *)&addr, &len ) )
+						{
+							printf_s( "[Debug] Connection Closed IP:[%s] Port:[%d] with Error Code %d \n",
+									  inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ), session->GerErrorCode() );
+						}
+
+						g_SessionManager->DestroySession( wParam );
+					}
 				}
 				else
 				{
@@ -240,6 +249,19 @@ bool HandleMessage( WPARAM wParam, LPARAM lParam )
 						{
 							PostMessage( g_hWnd, WM_SOCKET, wParam, FD_WRITE );
 						}
+					}
+					else
+					{
+						SOCKADDR_IN	addr;
+						int			len = sizeof( SOCKADDR_IN );
+
+						if ( -1 != getsockname( wParam, (sockaddr *)&addr, &len ) )
+						{
+							printf_s( "[Debug] Connection Closed IP:[%s] Port:[%d] with Error Code %d \n",
+									  inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ), session->GerErrorCode() );
+						}
+
+						g_SessionManager->DestroySession( wParam );
 					}
 				}
 				else

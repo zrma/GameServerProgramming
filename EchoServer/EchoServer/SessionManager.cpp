@@ -24,6 +24,9 @@ void SessionManager::DestroySession( SOCKET sock )
 {
 	if ( m_SessionList.find( sock ) != m_SessionList.end() )
 	{
+		auto toBeDelete = m_SessionList[sock];
+		delete ( toBeDelete );
+
 		m_SessionList.erase( sock );
 	}
 

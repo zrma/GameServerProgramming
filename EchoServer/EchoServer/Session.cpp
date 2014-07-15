@@ -13,8 +13,9 @@ bool Session::Recv()
 
 	if ( SOCKET_ERROR == WSARecv( m_Socket, &buf, 1, &recvBytes, &flags, NULL, NULL ) )
 	{
-		if ( WSAGetLastError() != WSAEWOULDBLOCK )
+		if ( WSAEWOULDBLOCK != ( m_ErrorCode = WSAGetLastError() ) )
 		{
+			m_IsConnected = false;
 			return false;
 		}
 	}
@@ -67,8 +68,9 @@ bool Session::Send()
 
 	if ( SOCKET_ERROR == WSASend( m_Socket, &buf, 1, &sendBytes, flags, NULL, NULL ) )
 	{
-		if ( WSAGetLastError() != WSAEWOULDBLOCK )
+		if ( WSAEWOULDBLOCK != ( m_ErrorCode = WSAGetLastError() ) )
 		{
+			m_IsConnected = false;
 			return false;
 		}
 	}
