@@ -56,6 +56,9 @@ bool Session::Send()
 		else
 		{
 			printf_s( "Buffer is full!! \n" );
+			assert( false );
+
+			return false;
 		}
 	}
 
