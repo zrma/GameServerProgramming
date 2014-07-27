@@ -66,8 +66,8 @@ bool SessionManager::AcceptSessions()
 		// if (false == newClient->PostAccept())
 		//		return false;
 
-		ClientSession* newClient = mFreeSessionList.front();
-		mFreeSessionList.pop_front();
+		ClientSession* newClient = mFreeSessionList.back();
+		mFreeSessionList.pop_back();
 
 		++m_CurrentIssueCount;
 

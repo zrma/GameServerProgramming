@@ -147,19 +147,17 @@ void ClientSession::AcceptCompletion()
 }
 
 
-void ClientSession::DisconnectRequest(DisconnectReason dr)
+void ClientSession::DisconnectRequest( DisconnectReason dr )
 {
 	/// 이미 끊겼거나 끊기는 중이거나
 	if ( 0 == InterlockedExchange( &m_Connected, 0 ) )
 	{
 		return;
 	}
-	
-	OverlappedDisconnectContext* context = new OverlappedDisconnectContext(this, dr);
+
+	OverlappedDisconnectContext* context = new OverlappedDisconnectContext( this, dr );
 
 	//TODO: DisconnectEx를 이용한 연결 끊기 요청 <- 구현
-	DWORD dwBytes = 0;
-
 	if ( FALSE == IocpManager::DisconnectEx( m_Socket, (LPOVERLAPPED)context, TF_REUSE_SOCKET, 0 ) )
 	{
 		if ( WSA_IO_PENDING != WSAGetLastError() )
@@ -170,9 +168,9 @@ void ClientSession::DisconnectRequest(DisconnectReason dr)
 	}
 }
 
-void ClientSession::DisconnectCompletion(DisconnectReason dr)
+void ClientSession::DisconnectCompletion( DisconnectReason dr )
 {
-	printf_s("[DEBUG] Client Disconnected: Reason=%d IP=%s, PORT=%d \n", dr, inet_ntoa(m_ClientAddr.sin_addr), ntohs(m_ClientAddr.sin_port));
+	printf_s( "[DEBUG] Client Disconnected: Reason=%d IP=%s, PORT=%d \n", dr, inet_ntoa( m_ClientAddr.sin_addr ), ntohs( m_ClientAddr.sin_port ) );
 
 	/// release refcount when added at issuing a session
 	ReleaseRef();
@@ -186,7 +184,7 @@ bool ClientSession::PreRecv()
 		return false;
 	}
 
-	OverlappedPreRecvContext* recvContext = new OverlappedPreRecvContext(this);
+	OverlappedPreRecvContext* recvContext = new OverlappedPreRecvContext( this );
 
 	//TODO: zero-byte recv 구현 <- 구현
 	DWORD recvBytes = 0;
@@ -201,7 +199,7 @@ bool ClientSession::PreRecv()
 		{
 			DeleteIoContext( recvContext );
 			printf_s( "[DEBUG] ClientSession::PreRecv Error : %d \n", GetLastError() );
-			
+
 			return false;
 		}
 	}
@@ -216,31 +214,31 @@ bool ClientSession::PostRecv()
 		return false;
 	}
 
-	FastSpinlockGuard criticalSection(m_BufferLock);
+	FastSpinlockGuard criticalSection( m_BufferLock );
 
 	if ( 0 == m_Buffer.GetFreeSpaceSize() )
 	{
 		return false;
 	}
 
-	OverlappedRecvContext* recvContext = new OverlappedRecvContext(this);
+	OverlappedRecvContext* recvContext = new OverlappedRecvContext( this );
 
 	DWORD recvbytes = 0;
 	DWORD flags = 0;
 	recvContext->m_WsaBuf.len = (ULONG)m_Buffer.GetFreeSpaceSize();
 	recvContext->m_WsaBuf.buf = m_Buffer.GetBuffer();
-	
+
 	/// start real recv
-	if (SOCKET_ERROR == WSARecv(m_Socket, &recvContext->m_WsaBuf, 1, &recvbytes, &flags,
-		(LPWSAOVERLAPPED)recvContext, NULL))
+	if ( SOCKET_ERROR == WSARecv( m_Socket, &recvContext->m_WsaBuf, 1, &recvbytes, &flags,
+		(LPWSAOVERLAPPED)recvContext, NULL ) )
 	{
-		if (WSAGetLastError() != WSA_IO_PENDING)
+		if ( WSAGetLastError() != WSA_IO_PENDING )
 		{
-			DeleteIoContext(recvContext);
-			printf_s("[DEBUG] ClientSession::PostRecv Error : %d \n", GetLastError());
-		
+			DeleteIoContext( recvContext );
+			printf_s( "[DEBUG] ClientSession::PostRecv Error : %d \n", GetLastError() );
+
 			return false;
-		}			
+		}
 	}
 
 	return true;
@@ -260,31 +258,31 @@ bool ClientSession::PostSend()
 		return false;
 	}
 
-	FastSpinlockGuard criticalSection(m_BufferLock);
+	FastSpinlockGuard criticalSection( m_BufferLock );
 
 	if ( 0 == m_Buffer.GetContiguiousBytes() )
 	{
 		return true;
 	}
 
-	OverlappedSendContext* sendContext = new OverlappedSendContext(this);
+	OverlappedSendContext* sendContext = new OverlappedSendContext( this );
 
 	DWORD sendbytes = 0;
 	DWORD flags = 0;
-	sendContext->m_WsaBuf.len = (ULONG) m_Buffer.GetContiguiousBytes(); 
+	sendContext->m_WsaBuf.len = (ULONG)m_Buffer.GetContiguiousBytes();
 	sendContext->m_WsaBuf.buf = m_Buffer.GetBufferStart();
 
 	/// start async send
-	if (SOCKET_ERROR == WSASend(m_Socket, &sendContext->m_WsaBuf, 1, &sendbytes, flags, 
-		(LPWSAOVERLAPPED)sendContext, NULL))
+	if ( SOCKET_ERROR == WSASend( m_Socket, &sendContext->m_WsaBuf, 1, &sendbytes, flags,
+		(LPWSAOVERLAPPED)sendContext, NULL ) )
 	{
-		if (WSAGetLastError() != WSA_IO_PENDING)
+		if ( WSAGetLastError() != WSA_IO_PENDING )
 		{
-			DeleteIoContext(sendContext);
-			printf_s("[DEBUG] ClientSession::PostSend Error : %d \n", GetLastError());
+			DeleteIoContext( sendContext );
+			printf_s( "[DEBUG] ClientSession::PostSend Error : %d \n", GetLastError() );
 
 			return false;
-		}	
+		}
 	}
 
 	return true;
@@ -315,7 +313,7 @@ void ClientSession::ReleaseRef()
 }
 
 
-void DeleteIoContext(OverlappedIOContext* context)
+void DeleteIoContext( OverlappedIOContext* context )
 {
 	if ( nullptr == context )
 	{
@@ -324,6 +322,5 @@ void DeleteIoContext(OverlappedIOContext* context)
 
 	context->m_SessionObject->ReleaseRef();
 
-	delete context;	
+	delete context;
 }
-
