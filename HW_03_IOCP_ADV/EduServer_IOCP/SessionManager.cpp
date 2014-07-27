@@ -10,7 +10,7 @@ SessionManager* g_SessionManager = nullptr;
 
 SessionManager::~SessionManager()
 {
-	for (auto it : mFreeSessionList)
+	for (auto it : m_FreeSessionList)
 	{
 		delete it;
 	}
@@ -25,13 +25,13 @@ void SessionManager::PrepareSessions()
 	{
 		ClientSession* client = new ClientSession();
 
-		mFreeSessionList.push_back( client );
+		m_FreeSessionList.push_back( client );
 	}
 }
 
 void SessionManager::ReturnClientSession(ClientSession* client)
 {
-	FastSpinlockGuard guard(mLock);
+	FastSpinlockGuard guard(m_Lock);
 
 	// 뭔가 접속이 안 끊어졌거나, Ref Count가 남아있는데 여기 들어오면 안 된다구욧!
 	CRASH_ASSERT( client->m_Connected == 0 && client->m_RefCount == 0 );
@@ -39,7 +39,7 @@ void SessionManager::ReturnClientSession(ClientSession* client)
 	// 세션 정보 초기화하고 소켓 끊어버리고 새 것으로 ㅇㅅㅇ
 	client->SessionReset();
 
-	mFreeSessionList.push_back(client);
+	m_FreeSessionList.push_back(client);
 
 	++m_CurrentReturnCount;
 }
@@ -47,13 +47,17 @@ void SessionManager::ReturnClientSession(ClientSession* client)
 // 얘는 트루를 리턴하는 한 0.1초마다 한 번씩 반복 호출 됨
 bool SessionManager::AcceptSessions()
 {
-	FastSpinlockGuard guard(mLock);
+	FastSpinlockGuard guard(m_Lock);
 
 	//////////////////////////////////////////////////////////////////////////
-	// m_CurrentIssueCount = 들어온 놈
-	// m_CurrentReturnCount = 나간 놈
+	// m_CurrentIssueCount = IOCP 총 등록 된 놈
+	// m_CurrentReturnCount = 총 반납 된 놈
 	//
-	// m_CurrentIssueCount - m_CurrentReturnCount = 현재 남아있는 놈
+	// m_CurrentIssueCount - m_CurrentReturnCount = 현재 IOCP 중인 놈
+	//
+	// ( 현재 IOCP 중인 놈 < 최대 세션풀 수 )
+	// 위의 경우 뭔가 반납 된 녀석이 있단 소리 = m_CurrentReturnCount 에 남는 세션 있단 소리
+	// -> 남는 것은 PostAccept()로 IOCP로 가버렷!
 	//////////////////////////////////////////////////////////////////////////
 	while (m_CurrentIssueCount - m_CurrentReturnCount < MAX_CONNECTION)
 	{
@@ -66,8 +70,8 @@ bool SessionManager::AcceptSessions()
 		// if (false == newClient->PostAccept())
 		//		return false;
 
-		ClientSession* newClient = mFreeSessionList.back();
-		mFreeSessionList.pop_back();
+		ClientSession* newClient = m_FreeSessionList.back();
+		m_FreeSessionList.pop_back();
 
 		++m_CurrentIssueCount;
 

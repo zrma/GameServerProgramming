@@ -22,9 +22,9 @@ public:
 
 private:
 	typedef std::list<ClientSession*> ClientList;
-	ClientList	mFreeSessionList;
+	ClientList	m_FreeSessionList;
 
-	FastSpinlock mLock;
+	FastSpinlock m_Lock;
 
 	uint64_t m_CurrentIssueCount;
 	uint64_t m_CurrentReturnCount;

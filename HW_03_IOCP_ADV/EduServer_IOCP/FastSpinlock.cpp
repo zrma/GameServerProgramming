@@ -2,7 +2,7 @@
 #include "FastSpinlock.h"
 
 
-FastSpinlock::FastSpinlock(): mLockFlag( 0 )
+FastSpinlock::FastSpinlock(): m_LockFlag( 0 )
 {
 }
 
@@ -16,7 +16,7 @@ void FastSpinlock::EnterLock()
 {
 	for ( int nloops = 0;; nloops++ )
 	{
-		if ( InterlockedExchange( &mLockFlag, 1 ) == 0 )
+		if ( InterlockedExchange( &m_LockFlag, 1 ) == 0 )
 		{
 			return;
 		}
@@ -30,5 +30,5 @@ void FastSpinlock::EnterLock()
 
 void FastSpinlock::LeaveLock()
 {
-	InterlockedExchange( &mLockFlag, 0 );
+	InterlockedExchange( &m_LockFlag, 0 );
 }

@@ -13,24 +13,24 @@ private:
 	FastSpinlock( const FastSpinlock& rhs );
 	FastSpinlock& operator=( const FastSpinlock& rhs );
 
-	volatile long mLockFlag;
+	volatile long m_LockFlag;
 };
 
 class FastSpinlockGuard
 {
 public:
-	FastSpinlockGuard( FastSpinlock& lock ): mLock( lock )
+	FastSpinlockGuard( FastSpinlock& lock ): m_Lock( lock )
 	{
-		mLock.EnterLock();
+		m_Lock.EnterLock();
 	}
 
 	~FastSpinlockGuard()
 	{
-		mLock.LeaveLock();
+		m_Lock.LeaveLock();
 	}
 
 private:
-	FastSpinlock& mLock;
+	FastSpinlock& m_Lock;
 };
 
 template <class TargetClass>
@@ -41,21 +41,21 @@ public:
 	{
 		LockGuard()
 		{
-			TargetClass::mLock.EnterLock();
+			TargetClass::m_Lock.EnterLock();
 		}
 
 		~LockGuard()
 		{
-			TargetClass::mLock.LeaveLock();
+			TargetClass::m_Lock.LeaveLock();
 		}
 
 	};
 
 private:
-	static FastSpinlock mLock;
+	static FastSpinlock m_Lock;
 
 	//friend struct LockGuard;
 };
 
 template <class TargetClass>
-FastSpinlock ClassTypeLock<TargetClass>::mLock;
+FastSpinlock ClassTypeLock<TargetClass>::m_Lock;
