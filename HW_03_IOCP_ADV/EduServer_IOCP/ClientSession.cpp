@@ -125,7 +125,7 @@ void ClientSession::AcceptCompletion()
 		HANDLE handle = CreateIoCompletionPort( (HANDLE)m_Socket, g_IocpManager->GetComletionPort(), ( ULONG_PTR )this, 0 );
 		if ( handle != g_IocpManager->GetComletionPort() )
 		{
-			printf_s( "[DEBUG] CreateIoCompletionPort Error in Client AcceptCompletion : %d \n", GetLastError );
+			printf_s( "[DEBUG] CreateIoCompletionPort Error in Client AcceptCompletion : %d \n", GetLastError() );
 			resultOk = false;
 			break;
 		}
