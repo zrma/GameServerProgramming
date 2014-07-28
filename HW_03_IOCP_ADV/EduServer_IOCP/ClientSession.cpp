@@ -55,10 +55,10 @@ bool ClientSession::PostAccept()
 	//TODO : AccpetEx를 이용한 구현. -> 구현
 	DWORD dwBytes = 0;
 	DWORD flags = 0;
-	acceptContext->m_WsaBuf.buf = m_Buffer.GetBuffer();
-	acceptContext->m_WsaBuf.len = m_Buffer.GetFreeSpaceSize();
+	acceptContext->m_WsaBuf.buf = nullptr;
+	acceptContext->m_WsaBuf.len = 0;
 	
-	if ( FALSE == IocpManager::AcceptEx( *( g_IocpManager->GetListenSocket() ), m_Socket, acceptContext->m_WsaBuf.buf, 0,
+	if ( FALSE == IocpManager::AcceptEx( *( g_IocpManager->GetListenSocket() ), m_Socket, g_IocpManager->m_AcceptBuffer, 0,  // <- 공통 더미 버퍼를 사용하는게 좋다 // sm9
 		sizeof( SOCKADDR_IN ) + 16, sizeof( SOCKADDR_IN ) + 16, &dwBytes, (LPOVERLAPPED)acceptContext ) )
 	{
 		if ( WSA_IO_PENDING != WSAGetLastError() )

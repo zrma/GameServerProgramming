@@ -24,6 +24,7 @@ void SessionManager::PrepareSessions()
 	for ( int i = 0; i < MAX_CONNECTION; ++i )
 	{
 		ClientSession* client = new ClientSession();
+		client->SessionReset();
 
 		m_FreeSessionList.push_back( client );
 	}

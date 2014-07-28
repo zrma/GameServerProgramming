@@ -34,6 +34,8 @@ public:
 	static LPFN_ACCEPTEX		m_FnAcceptEx;
 	static LPFN_DISCONNECTEX	m_FnDisconnectEx;
 
+	char m_AcceptBuffer[1024];
+
 private:
 	static unsigned int WINAPI IoWorkerThread( LPVOID lpParam );
 
