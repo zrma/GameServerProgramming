@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "CircularBuffer.h"
 #include <assert.h>
 
@@ -9,7 +9,7 @@ void CircularBuffer::Remove(size_t len)
 {
 	size_t cnt = len ;
 	
-	/// Read¿Í ¸¶Âù°¡Áö·Î A°¡ ÀÖ´Ù¸é A¿µ¿ª¿¡¼­ ¸ÕÀú »èÁ¦
+	/// Readì™€ ë§ˆì°¬ê°€ì§€ë¡œ Aê°€ ìˆë‹¤ë©´ Aì˜ì—­ì—ì„œ ë¨¼ì € ì‚­ì œ
 
 	if ( mARegionSize > 0 )
 	{
@@ -19,7 +19,7 @@ void CircularBuffer::Remove(size_t len)
 		cnt -= aRemove ;
 	}
 
-	// Á¦°ÅÇÒ ¿ë·®ÀÌ ´õ ³²Àº°æ¿ì B¿¡¼­ Á¦°Å 
+	// ì œê±°í•  ìš©ëŸ‰ì´ ë” ë‚¨ì€ê²½ìš° Bì—ì„œ ì œê±° 
 	if ( cnt > 0 && mBRegionSize > 0 )
 	{
 		size_t bRemove = (cnt > mBRegionSize) ? mBRegionSize : cnt ;
@@ -28,12 +28,12 @@ void CircularBuffer::Remove(size_t len)
 		cnt -= bRemove ;
 	}
 
-	/// A¿µ¿ªÀÌ ºñ¿öÁö¸é B¸¦ A·Î ½ºÀ§Ä¡ 
+	/// Aì˜ì—­ì´ ë¹„ì›Œì§€ë©´ Bë¥¼ Aë¡œ ìŠ¤ìœ„ì¹˜ 
 	if ( mARegionSize == 0 )
 	{
 		if ( mBRegionSize > 0 )
 		{
-			/// ¾ÕÀ¸·Î ´ç°Ü ºÙÀÌ±â
+			/// ì•ìœ¼ë¡œ ë‹¹ê²¨ ë¶™ì´ê¸°
 			if ( mBRegionPointer != mBuffer )
 				memmove(mBuffer, mBRegionPointer, mBRegionSize) ;
 	

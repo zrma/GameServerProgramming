@@ -1,25 +1,27 @@
-#pragma once
+ï»¿#pragma once
 
 
 
-/// Ä¿½ºÅÒÇÏ°Ô Èü¿¡¼­ ÇÒ´ç ¹Ş´Â ¾ÖµéÀº ÀüºÎ ¸Ş¸ğ¸® Á¤º¸ ºÙ¿©ÁÖ±â
+/// ì»¤ìŠ¤í…€í•˜ê²Œ í™ì—ì„œ í• ë‹¹ ë°›ëŠ” ì• ë“¤ì€ ì „ë¶€ ë©”ëª¨ë¦¬ ì •ë³´ ë¶™ì—¬ì£¼ê¸°
 __declspec(align(MEMORY_ALLOCATION_ALIGNMENT))
 struct MemAllocInfo : SLIST_ENTRY
 {
 	MemAllocInfo(int size) : mAllocSize(size), mExtraInfo(-1)
 	{}
 	
-	long mAllocSize; ///< MemAllocInfo°¡ Æ÷ÇÔµÈ Å©±â
-	long mExtraInfo; ///< ±âÅ¸ Ãß°¡ Á¤º¸ (¿¹: Å¸ÀÔ °ü·Ã Á¤º¸ µî)
+	long mAllocSize; ///< MemAllocInfoê°€ í¬í•¨ëœ í¬ê¸°
+	long mExtraInfo; ///< ê¸°íƒ€ ì¶”ê°€ ì •ë³´ (ì˜ˆ: íƒ€ì… ê´€ë ¨ ì •ë³´ ë“±)
 
-}; ///< total 16 ¹ÙÀÌÆ®
+}; ///< total 16 ë°”ì´íŠ¸
 
 inline void* AttachMemAllocInfo(MemAllocInfo* header, int size)
 {
-	//TODO: header¿¡ MemAllocInfo¸¦ ÆîÄ£ ´ÙÀ½¿¡ ½ÇÁ¦ ¾Û¿¡¼­ »ç¿ëÇÒ ¸Ş¸ğ¸® ÁÖ¼Ò¸¦ void*·Î ¸®ÅÏ... ½ÇÁ¦ »ç¿ëµÇ´Â ¿¹ ¹× DetachMemAllocInfo Âü°í.  -> ±¸Çö
+	//TODO: headerì— MemAllocInfoë¥¼ í¼ì¹œ ë‹¤ìŒì— ì‹¤ì œ ì•±ì—ì„œ ì‚¬ìš©í•  ë©”ëª¨ë¦¬ ì£¼ì†Œë¥¼ void*ë¡œ ë¦¬í„´... ì‹¤ì œ ì‚¬ìš©ë˜ëŠ” ì˜ˆ ë° DetachMemAllocInfo ì°¸ê³ .  -> êµ¬í˜„
 	// return 0;
 
-	header->mAllocSize = size;
+	// header->mAllocSize = size;
+	new (header)MemAllocInfo( size ); // ìƒì„±ìë¥¼ ì‚¬ìš©í•´ì„œ ì´ˆê¸°í™” í•˜ë„ë¡ í•˜ë¼! by sm9
+
 	++header;
 
 	return reinterpret_cast<void*>( header );
@@ -43,7 +45,7 @@ public:
 	
 
 private:
-	SLIST_HEADER mFreeList; ///< ¹İµå½Ã Ã¹¹øÂ° À§Ä¡
+	SLIST_HEADER mFreeList; ///< ë°˜ë“œì‹œ ì²«ë²ˆì§¸ ìœ„ì¹˜
 
 	const DWORD mAllocSize;
 	volatile long mAllocCount = 0;
@@ -60,12 +62,12 @@ public:
 private:
 	enum Config
 	{
-		/// ÇÔºÎ·Î ¹Ù²Ù¸é ¾ÈµÊ. Ã¶ÀúÈ÷ °è»êÈÄ ¹Ù²Ü °Í
-		MAX_SMALL_POOL_COUNT = 1024/32 + 1024/128 + 2048/256, ///< ~1024±îÁö 32´ÜÀ§, ~2048±îÁö 128´ÜÀ§, ~4096±îÁö 256´ÜÀ§
+		/// í•¨ë¶€ë¡œ ë°”ê¾¸ë©´ ì•ˆë¨. ì² ì €íˆ ê³„ì‚°í›„ ë°”ê¿€ ê²ƒ
+		MAX_SMALL_POOL_COUNT = 1024/32 + 1024/128 + 2048/256, ///< ~1024ê¹Œì§€ 32ë‹¨ìœ„, ~2048ê¹Œì§€ 128ë‹¨ìœ„, ~4096ê¹Œì§€ 256ë‹¨ìœ„
 		MAX_ALLOC_SIZE = 4096
 	};
 
-	/// ¿øÇÏ´Â Å©±âÀÇ ¸Ş¸ğ¸®¸¦ °¡Áö°í ÀÖ´Â Ç®¿¡ O(1) access¸¦ À§ÇÑ Å×ÀÌºí
+	/// ì›í•˜ëŠ” í¬ê¸°ì˜ ë©”ëª¨ë¦¬ë¥¼ ê°€ì§€ê³  ìˆëŠ” í’€ì— O(1) accessë¥¼ ìœ„í•œ í…Œì´ë¸”
 	SmallSizeMemoryPool* mSmallSizeMemoryPoolTable[MAX_ALLOC_SIZE+1];
 
 };
@@ -73,7 +75,7 @@ private:
 extern MemoryPool* GMemoryPool;
 
 
-/// ¿ä³ğÀ» »ó¼Ó ¹Ş¾Æ¾ß¸¸ xnew/xdelete »ç¿ëÇÒ ¼ö ÀÖ°Ô...
+/// ìš”ë†ˆì„ ìƒì† ë°›ì•„ì•¼ë§Œ xnew/xdelete ì‚¬ìš©í•  ìˆ˜ ìˆê²Œ...
 struct PooledAllocatable {};
 
 template <class T, class... Args>
@@ -81,13 +83,13 @@ T* xnew(Args... arg)
 {
 	static_assert(true == std::is_convertible<T, PooledAllocatable>::value, "only allowed when PooledAllocatable");
 
-	//TODO: T* obj = xnew<T>(...); Ã³·³ »ç¿ëÇÒ ¼öÀÖµµ·Ï ¸Ş¸ğ¸®Ç®¿¡¼­ ÇÒ´çÇÏ°í »ı¼ºÀÚ ºÒ·¯ÁÖ°í ¸®ÅÏ.  -> ±¸Çö
+	//TODO: T* obj = xnew<T>(...); ì²˜ëŸ¼ ì‚¬ìš©í•  ìˆ˜ìˆë„ë¡ ë©”ëª¨ë¦¬í’€ì—ì„œ í• ë‹¹í•˜ê³  ìƒì„±ì ë¶ˆëŸ¬ì£¼ê³  ë¦¬í„´.  -> êµ¬í˜„
 	void* alloc = nullptr; 
 	
 	CRASH_ASSERT( GMemoryPool != nullptr );
 	alloc = GMemoryPool->Allocate( sizeof( T ) );
 
-	//TODO: ... ...    -> ±¸Çö
+	//TODO: ... ...    -> êµ¬í˜„
 	new(alloc)T( arg... );
 
 	return reinterpret_cast<T*>(alloc);
@@ -98,7 +100,7 @@ void xdelete(T* object)
 {
 	static_assert(true == std::is_convertible<T, PooledAllocatable>::value, "only allowed when PooledAllocatable");
 
-	//TODO: objectÀÇ ¼Ò¸êÀÚ ºÒ·¯ÁÖ°í ¸Ş¸ğ¸®Ç®¿¡ ¹İ³³.  -> ±¸Çö	
+	//TODO: objectì˜ ì†Œë©¸ì ë¶ˆëŸ¬ì£¼ê³  ë©”ëª¨ë¦¬í’€ì— ë°˜ë‚©.  -> êµ¬í˜„	
 	object->~T();
 
 	CRASH_ASSERT( GMemoryPool != nullptr );

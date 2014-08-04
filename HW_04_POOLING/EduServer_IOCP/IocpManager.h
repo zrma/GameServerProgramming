@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class ClientSession;
 
@@ -26,6 +26,12 @@ public:
 
 	SOCKET* GetListenSocket()  { return &mListenSocket;  }
 
+	static BOOL DisconnectEx( SOCKET hSocket, LPOVERLAPPED lpOverlapped, DWORD dwFlags, DWORD reserved );
+
+	static BOOL AcceptEx( SOCKET sListenSocket, SOCKET sAcceptSocket, PVOID lpOutputBuffer, DWORD dwReceiveDataLength,
+				   DWORD dwLocalAddressLength, DWORD dwRemoteAddressLength, LPDWORD lpdwBytesReceived, LPOVERLAPPED lpOverlapped );
+
+
 	static char mAcceptBuf[64];
 	static LPFN_DISCONNECTEX mFnDisconnectEx;
 	static LPFN_ACCEPTEX mFnAcceptEx;
@@ -48,9 +54,3 @@ private:
 
 extern __declspec(thread) int LIoThreadId;
 extern IocpManager* GIocpManager;
-
-
-BOOL DisconnectEx(SOCKET hSocket, LPOVERLAPPED lpOverlapped, DWORD dwFlags, DWORD reserved);
-
-BOOL AcceptEx(SOCKET sListenSocket, SOCKET sAcceptSocket, PVOID lpOutputBuffer, DWORD dwReceiveDataLength,
-	DWORD dwLocalAddressLength, DWORD dwRemoteAddressLength, LPDWORD lpdwBytesReceived, LPOVERLAPPED lpOverlapped);

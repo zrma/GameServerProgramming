@@ -1,4 +1,4 @@
-#include "stdafx.h"
+Ôªø#include "stdafx.h"
 #include "Exception.h"
 #include "EduServer_IOCP.h"
 #include "ClientSession.h"
@@ -53,13 +53,13 @@ bool ClientSession::PostAccept()
 	acceptContext->mWsaBuf.len = 0;
 	acceptContext->mWsaBuf.buf = nullptr;
 
-	if (FALSE == AcceptEx(*GIocpManager->GetListenSocket(), mSocket, GIocpManager->mAcceptBuf, 0,
+	if ( FALSE == IocpManager::AcceptEx( *GIocpManager->GetListenSocket(), mSocket, GIocpManager->mAcceptBuf, 0,
 		sizeof(SOCKADDR_IN)+16, sizeof(SOCKADDR_IN)+16, &bytes, (LPOVERLAPPED)acceptContext))
 	{
-		if (WSAGetLastError() != WSA_IO_PENDING)
+		if ( WSAGetLastError() != WSA_IO_PENDING )
 		{
-			DeleteIoContext(acceptContext);
-			printf_s("AcceptEx Error : %d\n", GetLastError());
+			DeleteIoContext( acceptContext );
+			printf_s( "AcceptEx Error : %d\n", GetLastError() );
 
 			return false;
 		}
@@ -141,13 +141,13 @@ void ClientSession::AcceptCompletion()
 
 void ClientSession::DisconnectRequest(DisconnectReason dr)
 {
-	/// ¿ÃπÃ ≤˜∞Â∞≈≥™ ≤˜±‚¥¬ ¡ﬂ¿Ã∞≈≥™
+	/// Ïù¥ÎØ∏ ÎÅäÍ≤ºÍ±∞ÎÇò ÎÅäÍ∏∞Îäî Ï§ëÏù¥Í±∞ÎÇò
 	if (0 == InterlockedExchange(&mConnected, 0))
 		return ;
 	
 	OverlappedDisconnectContext* context = new OverlappedDisconnectContext(this, dr);
 
-	if (FALSE == DisconnectEx(mSocket, (LPWSAOVERLAPPED)context, TF_REUSE_SOCKET, 0))
+	if (FALSE == IocpManager::DisconnectEx(mSocket, (LPWSAOVERLAPPED)context, TF_REUSE_SOCKET, 0))
 	{
 		if (WSAGetLastError() != WSA_IO_PENDING)
 		{

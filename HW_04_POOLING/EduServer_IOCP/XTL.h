@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "MemoryPool.h"
 #include <list>
 #include <vector>
@@ -45,7 +45,7 @@ public:
 
 	T* allocate(size_t n)
 	{
-		//TODO: ¸Þ¸ð¸®Ç®¿¡¼­ ÇÒ´çÇØ¼­ ¸®ÅÏ  -> ±¸Çö
+		//TODO: ë©”ëª¨ë¦¬í’€ì—ì„œ í• ë‹¹í•´ì„œ ë¦¬í„´  -> êµ¬í˜„
 		// return static_cast<T*>(malloc(n*sizeof(T)));
 		
 		CRASH_ASSERT( GMemoryPool != nullptr );
@@ -54,7 +54,7 @@ public:
 
 	void deallocate(T* ptr, size_t n)
 	{
-		//TODO: ¸Þ¸ð¸®Ç®¿¡ ¹Ý³³  -> ±¸Çö
+		//TODO: ë©”ëª¨ë¦¬í’€ì— ë°˜ë‚©  -> êµ¬í˜„
 		// free(ptr);
 
 		CRASH_ASSERT( GMemoryPool != nullptr );
@@ -72,7 +72,7 @@ struct xvector
 template <class T>
 struct xdeque
 {
-	//TODO: STL ÇÒ´çÀÚ¸¦ »ç¿ëÇÏ´Â deque¸¦ typeÀ¸·Î ¼±¾ð  -> ±¸Çö
+	//TODO: STL í• ë‹¹ìžë¥¼ ì‚¬ìš©í•˜ëŠ” dequeë¥¼ typeìœ¼ë¡œ ì„ ì–¸  -> êµ¬í˜„
 	//typedef ... type;
 	typedef std::deque<T, STLAllocator<T>> type;
 };
@@ -80,7 +80,7 @@ struct xdeque
 template <class T>
 struct xlist
 {
-	//TODO: STL ÇÒ´çÀÚ »ç¿ë  -> ±¸Çö
+	//TODO: STL í• ë‹¹ìž ì‚¬ìš©  -> êµ¬í˜„
 	// typedef std::list<T> type;
 	typedef std::list<T, STLAllocator<T>> type;
 };
@@ -88,7 +88,7 @@ struct xlist
 template <class K, class T, class C = std::less<K> >
 struct xmap
 {
-	//TODO: STL ÇÒ´çÀÚ »ç¿ëÇÏ´Â mapÀ»  typeÀ¸·Î ¼±¾ð  -> ±¸Çö
+	//TODO: STL í• ë‹¹ìž ì‚¬ìš©í•˜ëŠ” mapì„  typeìœ¼ë¡œ ì„ ì–¸  -> êµ¬í˜„
 	//typedef ... type;
 	typedef std::map<K, T, C, STLAllocator<std::pair<K, T>>> type;
 };
@@ -96,7 +96,7 @@ struct xmap
 template <class T, class C = std::less<T> >
 struct xset
 {
-	//TODO: STL ÇÒ´çÀÚ »ç¿ëÇÏ´Â setÀ»  typeÀ¸·Î ¼±¾ð  -> ±¸Çö
+	//TODO: STL í• ë‹¹ìž ì‚¬ìš©í•˜ëŠ” setì„  typeìœ¼ë¡œ ì„ ì–¸  -> êµ¬í˜„
 	//typedef ... type;
 	typedef std::set<T, C, STLAllocator<T>> type;
 };
@@ -116,9 +116,9 @@ struct xhash_set
 template <class T, class C = std::less<std::vector<T>::value_type> >
 struct xpriority_queue
 {
-	//TODO: STL ÇÒ´çÀÚ »ç¿ëÇÏ´Â priority_queueÀ»  typeÀ¸·Î ¼±¾ð  -> ±¸Çö
+	//TODO: STL í• ë‹¹ìž ì‚¬ìš©í•˜ëŠ” priority_queueì„  typeìœ¼ë¡œ ì„ ì–¸  -> êµ¬í˜„
 	//typedef ... type;
-	typedef std::priority_queue<T, std::vector<T>, C> type;
+	typedef std::priority_queue<T, std::vector<T, STLAllocator<T>>, C> type;
 };
 
 typedef std::basic_string<wchar_t, std::char_traits<wchar_t>, STLAllocator<wchar_t>> xstring;

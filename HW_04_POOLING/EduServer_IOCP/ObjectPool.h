@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 
 #include "Exception.h"
@@ -6,14 +6,15 @@
 
 
 template <class TOBJECT, int ALLOC_COUNT = 100>
-class ObjectPool
+class ObjectPool: public ClassTypeLock < ObjectPool<TOBJECT> >
 {
 public:
 
 	static void* operator new(size_t objSize)
 	{
-		//TODO: TOBJECT Å¸ÀÔ ´ÜÀ§·Î lock Àá±Ý  -> ±¸Çö
-		FastSpinlockGuard criticalSection( mLock );
+		//TODO: TOBJECT íƒ€ìž… ë‹¨ìœ„ë¡œ lock ìž ê¸ˆ  -> êµ¬í˜„
+		// FastSpinlockGuard criticalSection( mLock );
+		ClassTypeLock<ObjectPool<TOBJECT>>::LockGuard criticalSection;
 
 		if (!mFreeList)
 		{
@@ -29,7 +30,7 @@ public:
 				ppCurr = reinterpret_cast<uint8_t**>(pNext);
 			}
 
-			// ÀÌ ºÎºÐ Ãß°¡ÇßÀ½
+			// ì´ ë¶€ë¶„ ì¶”ê°€í–ˆìŒ
 			*ppCurr = 0;
 			mTotalAllocCount += ALLOC_COUNT;
 		}
@@ -45,8 +46,9 @@ public:
 
 	static void	operator delete(void* obj)
 	{
-		//TODO: TOBJECT Å¸ÀÔ ´ÜÀ§·Î lock Àá±Ý  -> ±¸Çö
-		FastSpinlockGuard criticalSection( mLock );
+		//TODO: TOBJECT íƒ€ìž… ë‹¨ìœ„ë¡œ lock ìž ê¸ˆ  -> êµ¬í˜„
+		// FastSpinlockGuard criticalSection( mLock );
+		ClassTypeLock<ObjectPool<TOBJECT>>::LockGuard criticalSection;
 
 		CRASH_ASSERT(mCurrentUseCount > 0);
 
@@ -58,7 +60,7 @@ public:
 
 
 private:
-	static FastSpinlock		mLock;
+	// static FastSpinlock		mLock;
 
 	static uint8_t*	mFreeList;
 	static int		mTotalAllocCount; ///< for tracing
@@ -66,8 +68,8 @@ private:
 
 };
 
-template <class TOBJECT, int ALLOC_COUNT>
-FastSpinlock ObjectPool<TOBJECT, ALLOC_COUNT>::mLock;
+// template <class TOBJECT, int ALLOC_COUNT>
+// FastSpinlock ObjectPool<TOBJECT, ALLOC_COUNT>::mLock;
 
 template <class TOBJECT, int ALLOC_COUNT>
 uint8_t* ObjectPool<TOBJECT, ALLOC_COUNT>::mFreeList = nullptr;

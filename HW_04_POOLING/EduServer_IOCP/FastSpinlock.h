@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class FastSpinlock
 {
@@ -54,7 +54,7 @@ public:
 private:
 	static FastSpinlock mLock;
 	
-	//friend struct LockGuard;
+	friend struct LockGuard;
 };
 
 template <class TargetClass>

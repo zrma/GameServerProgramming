@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "ObjectPool.h"
 #include "MemoryPool.h"
 #include "CircularBuffer.h"
@@ -38,7 +38,7 @@ struct OverlappedIOContext
 
 };
 
-//TODO: ¾Æ·¡ÀÇ OverlappedXXXXContext´Â ObjectPool<>À» »ç¿ëÇÏµµ·Ï ¼öÁ¤  -> ±¸Çö
+//TODO: ì•„ë˜ì˜ OverlappedXXXXContextëŠ” ObjectPool<>ì„ ì‚¬ìš©í•˜ë„ë¡ ìˆ˜ì •  -> êµ¬í˜„
 
 struct OverlappedSendContext: public OverlappedIOContext, public ObjectPool < OverlappedSendContext >
 {
@@ -81,7 +81,7 @@ struct OverlappedAcceptContext: public OverlappedIOContext, public ObjectPool < 
 
 void DeleteIoContext(OverlappedIOContext* context) ;
 
-//TODO: ¾Æ·¡ÀÇ ClientSessionÀº xnew/xdelete»ç¿ë °¡´ÉÇÏµµ·Ï Å¬·¡½º Á¤ÀÇ ºÎºĞ ¼öÁ¤  -> ±¸Çö
+//TODO: ì•„ë˜ì˜ ClientSessionì€ xnew/xdeleteì‚¬ìš© ê°€ëŠ¥í•˜ë„ë¡ í´ë˜ìŠ¤ ì •ì˜ ë¶€ë¶„ ìˆ˜ì •  -> êµ¬í˜„
 class ClientSession: public PooledAllocatable
 {
 public:
