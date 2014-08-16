@@ -52,6 +52,7 @@ void ClientSession::SessionReset()
 		printf_s("[DEBUG] setsockopt linger option error: %d\n", GetLastError());
 	}
 	closesocket(mSocket);
+
 	mSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 }
 
@@ -144,11 +145,6 @@ void ClientSession::ConnectCompletion()
 	{
 		DisconnectRequest( DR_ONCONNECT_ERROR );
 		return;
-	}
-
-	if ( false == PreRecv() )
-	{
-		printf_s( "[DEBUG] PreRecv error: %d\n", GetLastError() );
 	}
 
 	FastSpinlockGuard criticalSection( mBufferLock );
@@ -265,7 +261,7 @@ bool ClientSession::PostRecv()
 		if (WSAGetLastError() != WSA_IO_PENDING)
 		{
 			DeleteIoContext(recvContext);
-			// printf_s("ClientSession::PostRecv Error : %d\n", GetLastError());
+			printf_s("ClientSession::PostRecv Error : %d\n", GetLastError());
 			return false;
 		}
 			
@@ -309,7 +305,6 @@ bool ClientSession::PostSend()
 
 			return false;
 		}
-			
 	}
 
 	return true;
@@ -338,7 +333,6 @@ void ClientSession::ReleaseRef()
 		GSessionManager->ReturnClientSession(this);
 	}
 }
-
 
 void DeleteIoContext(OverlappedIOContext* context)
 {
