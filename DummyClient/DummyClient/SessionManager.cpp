@@ -35,9 +35,6 @@ void SessionManager::PrepareSessions()
 }
 
 
-
-
-
 void SessionManager::ReturnClientSession(ClientSession* client)
 {
 	FastSpinlockGuard guard(mLock);
@@ -51,11 +48,11 @@ void SessionManager::ReturnClientSession(ClientSession* client)
 	++mCurrentReturnCount;
 }
 
-bool SessionManager::AcceptSessions()
+bool SessionManager::ConnectSessions()
 {
-	FastSpinlockGuard guard(mLock);
+	FastSpinlockGuard guard( mLock );
 
-	while (mCurrentIssueCount - mCurrentReturnCount < MAX_CONNECTION)
+	while ( mCurrentIssueCount - mCurrentReturnCount < MAX_CONNECTION )
 	{
 		ClientSession* newClient = mFreeSessionList.back();
 		mFreeSessionList.pop_back();
@@ -63,11 +60,10 @@ bool SessionManager::AcceptSessions()
 		++mCurrentIssueCount;
 
 		newClient->AddRef(); ///< refcount +1 for issuing 
-		
-		if (false == newClient->PostAccept())
+
+		if ( false == newClient->PostConnect() )
 			return false;
 	}
-
-
+	
 	return true;
 }

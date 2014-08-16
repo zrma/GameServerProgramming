@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "Player.h"
 #include "PlayerManager.h"
+#include "Exception.h"
 
 PlayerManager* GPlayerManager = nullptr;
 
@@ -40,6 +41,8 @@ int PlayerManager::GetCurrentPlayers(PlayerList& outList)
 		
 		++total;
 	}
+
+	CRASH_ASSERT( mPlayerMap.size() == total );
 
 	return total;
 }

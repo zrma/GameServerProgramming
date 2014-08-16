@@ -13,7 +13,8 @@ public:
 	~SessionManager();
 
 	void PrepareSessions();
-	bool AcceptSessions();
+	
+	bool ConnectSessions();
 
 	void ReturnClientSession(ClientSession* client);
 

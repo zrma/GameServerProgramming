@@ -10,25 +10,32 @@
 
 IocpManager* GIocpManager = nullptr;
 
+LPFN_CONNECTEX IocpManager::mFnConnectEx = nullptr;
 LPFN_DISCONNECTEX IocpManager::mFnDisconnectEx = nullptr;
 LPFN_ACCEPTEX IocpManager::mFnAcceptEx = nullptr;
 
 char IocpManager::mAcceptBuf[64] = { 0, };
 
 
+BOOL IocpManager::ConnectEx( SOCKET hSocket, const struct sockaddr *name, int nameLen, 
+							 PVOID lpSendBuffer, DWORD dwSendDataLength, LPDWORD lpdwBytesSent, LPOVERLAPPED lpOverlapped )
+{
+	return mFnConnectEx( hSocket, name, nameLen, lpSendBuffer, dwSendDataLength, lpdwBytesSent, lpOverlapped );
+}
+
 BOOL IocpManager::DisconnectEx( SOCKET hSocket, LPOVERLAPPED lpOverlapped, DWORD dwFlags, DWORD reserved )
 {
-	return IocpManager::mFnDisconnectEx(hSocket, lpOverlapped, dwFlags, reserved);
+	return mFnDisconnectEx(hSocket, lpOverlapped, dwFlags, reserved);
 }
 
 BOOL IocpManager::AcceptEx( SOCKET sListenSocket, SOCKET sAcceptSocket, PVOID lpOutputBuffer, DWORD dwReceiveDataLength,
 	DWORD dwLocalAddressLength, DWORD dwRemoteAddressLength, LPDWORD lpdwBytesReceived, LPOVERLAPPED lpOverlapped)
 {
-	return IocpManager::mFnAcceptEx(sListenSocket, sAcceptSocket, lpOutputBuffer, dwReceiveDataLength,
+	return mFnAcceptEx(sListenSocket, sAcceptSocket, lpOutputBuffer, dwReceiveDataLength,
 		dwLocalAddressLength, dwRemoteAddressLength, lpdwBytesReceived, lpOverlapped);
 }
 
-IocpManager::IocpManager() : mCompletionPort(NULL), mIoThreadCount(2), mListenSocket(NULL)
+IocpManager::IocpManager() : mCompletionPort(NULL), mIoThreadCount(2)
 {	
 }
 
@@ -55,47 +62,51 @@ bool IocpManager::Initialize()
 		return false;
 
 	/// create TCP socket
-	mListenSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
-	if (mListenSocket == INVALID_SOCKET)
+	mListenSocket = WSASocket( AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED );
+	if ( mListenSocket == INVALID_SOCKET )
 		return false;
 
-	HANDLE handle = CreateIoCompletionPort((HANDLE)mListenSocket, mCompletionPort, 0, 0);
-	if (handle != mCompletionPort)
+	HANDLE handle = CreateIoCompletionPort( (HANDLE)mListenSocket, mCompletionPort, 0, 0 );
+	if ( handle != mCompletionPort )
 	{
-		printf_s("[DEBUG] listen socket IOCP register error: %d\n", GetLastError());
+		printf_s( "[DEBUG] listen socket IOCP register error: %d\n", GetLastError() );
 		return false;
 	}
 
 	int opt = 1;
-	setsockopt(mListenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(int));
+	setsockopt( mListenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof( int ) );
 
 	/// bind
 	SOCKADDR_IN serveraddr;
-	ZeroMemory(&serveraddr, sizeof(serveraddr));
+	ZeroMemory( &serveraddr, sizeof( serveraddr ) );
 	serveraddr.sin_family = AF_INET;
-	serveraddr.sin_port = htons(LISTEN_PORT);
-	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	serveraddr.sin_port = 0;
+	serveraddr.sin_addr.s_addr = htonl( INADDR_ANY );
 
-	if (SOCKET_ERROR == bind(mListenSocket, (SOCKADDR*)&serveraddr, sizeof(serveraddr)))
+	if ( SOCKET_ERROR == bind( mListenSocket, (SOCKADDR*)&serveraddr, sizeof( serveraddr ) ) )
 		return false;
 
-	GUID guidDisconnectEx = WSAID_DISCONNECTEX ;
-	DWORD bytes = 0 ;
-	if (SOCKET_ERROR == WSAIoctl(mListenSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, 
-		&guidDisconnectEx, sizeof(GUID), &mFnDisconnectEx, sizeof(LPFN_DISCONNECTEX), &bytes, NULL, NULL) )
+	GUID guidDisconnectEx = WSAID_DISCONNECTEX;
+	DWORD bytes = 0;
+	if ( SOCKET_ERROR == WSAIoctl( mListenSocket, SIO_GET_EXTENSION_FUNCTION_POINTER,
+		&guidDisconnectEx, sizeof( GUID ), &mFnDisconnectEx, sizeof( LPFN_DISCONNECTEX ), &bytes, NULL, NULL ) )
 		return false;
 
-	GUID guidAcceptEx = WSAID_ACCEPTEX ;
-	if (SOCKET_ERROR == WSAIoctl(mListenSocket, SIO_GET_EXTENSION_FUNCTION_POINTER,
-		&guidAcceptEx, sizeof(GUID), &mFnAcceptEx, sizeof(LPFN_ACCEPTEX), &bytes, NULL, NULL))
+	GUID guidConnectEx = WSAID_CONNECTEX;
+	if ( SOCKET_ERROR == WSAIoctl( mListenSocket, SIO_GET_EXTENSION_FUNCTION_POINTER,
+		&guidConnectEx, sizeof( GUID ), &mFnConnectEx, sizeof( LPFN_CONNECTEX ), &bytes, NULL, NULL ) )
 		return false;
-	
+
+	GUID guidAcceptEx = WSAID_ACCEPTEX;
+	if ( SOCKET_ERROR == WSAIoctl( mListenSocket, SIO_GET_EXTENSION_FUNCTION_POINTER,
+		&guidAcceptEx, sizeof( GUID ), &mFnAcceptEx, sizeof( LPFN_ACCEPTEX ), &bytes, NULL, NULL ) )
+		return false;
+
 	/// make session pool
 	GSessionManager->PrepareSessions();
 
 	return true;
 }
-
 
 bool IocpManager::StartIoThreads()
 {
@@ -112,22 +123,14 @@ bool IocpManager::StartIoThreads()
 }
 
 
-void IocpManager::StartAccept()
+void IocpManager::StartConnect()
 {
-	/// listen
-	if (SOCKET_ERROR == listen(mListenSocket, SOMAXCONN))
+	// connect
+	while ( GSessionManager->ConnectSessions() && mIoThreadCount > 0 )
 	{
-		printf_s("[DEBUG] listen error\n");
-		return;
+		Sleep( 100 );
 	}
-		
-	while (GSessionManager->AcceptSessions())
-	{
-		Sleep(100);
-	}
-
 }
-
 
 void IocpManager::Finalize()
 {
@@ -135,7 +138,6 @@ void IocpManager::Finalize()
 
 	/// winsock finalizing
 	WSACleanup();
-
 }
 
 unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
@@ -145,7 +147,9 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 
 	HANDLE hComletionPort = GIocpManager->GetComletionPort();
 
-	while (true)
+	DWORD startTime = timeGetTime();
+
+	while ( timeGetTime() - startTime < 10000 )
 	{
 		/// IOCP 작업 돌리기
 		DWORD dwTransferred = 0;
@@ -190,8 +194,8 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 			completionOk = true;
 			break;
 
-		case IO_ACCEPT:
-			theClient->AcceptCompletion();
+		case IO_CONNECT:
+			theClient->ConnectCompletion();
 			completionOk = true;
 			break;
 
@@ -222,7 +226,28 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 		DeleteIoContext(context);
 	}
 
+	GIocpManager->DecreaseThreadCount();
+	GIocpManager->IncreaseSendCount( LSendCount );
+	GIocpManager->IncreaseRecvCount( LRecvCount );
+
 	return 0;
+}
+
+void IocpManager::IncreaseSendCount( long count )
+{
+	FastSpinlockGuard criticalSection( mLock ); 
+	InterlockedAdd64( &mSendCount, count );
+}
+
+void IocpManager::IncreaseRecvCount( long count )
+{
+	InterlockedAdd64( &mRecvCount, count );
+}
+
+void IocpManager::DecreaseThreadCount()
+{
+	FastSpinlockGuard criticalSection( mLock );
+	InterlockedDecrement( &mIoThreadCount );
 }
 
 bool IocpManager::PreReceiveCompletion(ClientSession* client, OverlappedPreRecvContext* context, DWORD dwTransferred)
@@ -252,5 +277,3 @@ bool IocpManager::SendCompletion(ClientSession* client, OverlappedSendContext* c
 	/// zero receive
 	return client->PreRecv();
 }
-
-

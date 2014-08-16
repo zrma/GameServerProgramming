@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "FastSpinlock.h"
 
 class ClientSession;
 
@@ -19,17 +20,30 @@ public:
 
 	bool StartIoThreads();
 	void StartAccept();
+	void StartConnect();
 
+	long long GetSendCount() { return mSendCount; }
+	long long GetRecvCount() { return mRecvCount; }
+	void IncreaseSendCount( long count );
+	void IncreaseRecvCount( long count );
 
+	long GetConnectCount() { return mConnectCount; }
+	void IncreaseConnectCount()
+	{
+		InterlockedIncrement( &mConnectCount );
+	}
+	
 	HANDLE GetComletionPort()	{ return mCompletionPort; }
 	int	GetIoThreadCount()		{ return mIoThreadCount;  }
-
-	SOCKET* GetListenSocket()  { return &mListenSocket;  }
-
+	void DecreaseThreadCount();
+	
 	static char mAcceptBuf[64];
+	static LPFN_CONNECTEX mFnConnectEx;
 	static LPFN_DISCONNECTEX mFnDisconnectEx;
 	static LPFN_ACCEPTEX mFnAcceptEx;
-
+	
+	static BOOL ConnectEx( SOCKET hSocket, const struct sockaddr *name, int nameLen,
+						   PVOID lpSendBuffer, DWORD dwSendDataLength, LPDWORD lpdwBytesSent, LPOVERLAPPED lpOverlapped );
 	static BOOL DisconnectEx( SOCKET hSocket, LPOVERLAPPED lpOverlapped, DWORD dwFlags, DWORD reserved );
 	static BOOL AcceptEx( SOCKET sListenSocket, SOCKET sAcceptSocket, PVOID lpOutputBuffer, DWORD dwReceiveDataLength,
 				   DWORD dwLocalAddressLength, DWORD dwRemoteAddressLength, LPDWORD lpdwBytesReceived, LPOVERLAPPED lpOverlapped );
@@ -44,9 +58,16 @@ private:
 private:
 
 	HANDLE	mCompletionPort;
-	int		mIoThreadCount;
+	volatile long	mIoThreadCount;
+
+	volatile long long	mSendCount;
+	volatile long long	mRecvCount;
+
+	volatile long	mConnectCount;
 
 	SOCKET	mListenSocket;
+
+	FastSpinlock	mLock;
 };
 
 extern IocpManager* GIocpManager;

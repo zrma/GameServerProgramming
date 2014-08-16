@@ -19,6 +19,18 @@ ClientSession::ClientSession() : mBuffer(BUFSIZE), mConnected(0), mRefCount(0)
 {
 	memset(&mClientAddr, 0, sizeof(SOCKADDR_IN));
 	mSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+
+	struct sockaddr_in addr;
+	ZeroMemory( &addr, sizeof( addr ) );
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = 0;
+	int result = bind( mSocket, (SOCKADDR*)&addr, sizeof( addr ) );
+
+	if ( result != 0 )
+	{
+		printf( "Bind failed: %d\n", WSAGetLastError() );
+	}
 }
 
 
@@ -40,105 +52,141 @@ void ClientSession::SessionReset()
 		printf_s("[DEBUG] setsockopt linger option error: %d\n", GetLastError());
 	}
 	closesocket(mSocket);
-
 	mSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 }
 
-bool ClientSession::PostAccept()
+
+bool ClientSession::PostConnect()
 {
-	CRASH_ASSERT(LThreadType == THREAD_MAIN);
+	CRASH_ASSERT( LThreadType == THREAD_MAIN );
 
-	OverlappedAcceptContext* acceptContext = new OverlappedAcceptContext(this);
-	DWORD bytes = 0;
-	DWORD flags = 0;
-	acceptContext->mWsaBuf.len = 0;
-	acceptContext->mWsaBuf.buf = nullptr;
-
-	if ( FALSE == IocpManager::AcceptEx( *GIocpManager->GetListenSocket(), mSocket, GIocpManager->mAcceptBuf, 0,
-		sizeof(SOCKADDR_IN)+16, sizeof(SOCKADDR_IN)+16, &bytes, (LPOVERLAPPED)acceptContext))
+	HANDLE handle = CreateIoCompletionPort( (HANDLE)mSocket, GIocpManager->GetComletionPort(), ( ULONG_PTR )this, 0 );
+	if ( handle != GIocpManager->GetComletionPort() )
 	{
-		if (WSAGetLastError() != WSA_IO_PENDING)
+		printf_s( "[DEBUG] CreateIoCompletionPort error: %d\n", GetLastError() );
+		return false;
+	}
+
+	OverlappedConnectContext* connectContext = new OverlappedConnectContext( this );
+	DWORD bytes = 0;
+	connectContext->mWsaBuf.len = 0;
+	connectContext->mWsaBuf.buf = nullptr;
+	
+	sockaddr_in addr;
+	ZeroMemory( &addr, sizeof( addr ) );
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
+	addr.sin_port = htons( 9001 );
+
+	if ( FALSE == IocpManager::ConnectEx( mSocket, (SOCKADDR*)&addr, sizeof( addr ), 
+		GIocpManager->mAcceptBuf, 0, &bytes, (LPOVERLAPPED)connectContext ) )
+	{
+		if ( WSAGetLastError() != WSA_IO_PENDING )
 		{
-			DeleteIoContext(acceptContext);
-			printf_s("AcceptEx Error : %d\n", GetLastError());
+			DeleteIoContext( connectContext );
+			printf_s( "ConnectEx Error : %d\n", GetLastError() );
 
 			return false;
 		}
 	}
-
+	
 	return true;
 }
 
-void ClientSession::AcceptCompletion()
+void ClientSession::ConnectCompletion()
 {
-	CRASH_ASSERT(LThreadType == THREAD_IO_WORKER);
-	
-	if (1 == InterlockedExchange(&mConnected, 1))
+	CRASH_ASSERT( LThreadType == THREAD_IO_WORKER );
+	if ( 1 == InterlockedExchange( &mConnected, 1 ) )
 	{
 		/// already exists?
-		CRASH_ASSERT(false);
+		CRASH_ASSERT( false );
 		return;
 	}
 
 	bool resultOk = true;
-	do 
+
+	do
 	{
-		if (SOCKET_ERROR == setsockopt(mSocket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)GIocpManager->GetListenSocket(), sizeof(SOCKET)))
+		if ( SOCKET_ERROR == setsockopt( mSocket, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0 ) )
 		{
-			printf_s("[DEBUG] SO_UPDATE_ACCEPT_CONTEXT error: %d\n", GetLastError());
+			printf_s( "[DEBUG] SO_UPDATE_CONNECT_CONTEXT error: %d\n", GetLastError() );
 			resultOk = false;
 			break;
 		}
 
 		int opt = 1;
-		if (SOCKET_ERROR == setsockopt(mSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(int)))
+		if ( SOCKET_ERROR == setsockopt( mSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof( int ) ) )
 		{
-			printf_s("[DEBUG] TCP_NODELAY error: %d\n", GetLastError());
+			printf_s( "[DEBUG] TCP_NODELAY error: %d\n", GetLastError() );
 			resultOk = false;
 			break;
 		}
 
 		opt = 0;
-		if (SOCKET_ERROR == setsockopt(mSocket, SOL_SOCKET, SO_RCVBUF, (const char*)&opt, sizeof(int)))
+		if ( SOCKET_ERROR == setsockopt( mSocket, SOL_SOCKET, SO_RCVBUF, (const char*)&opt, sizeof( int ) ) )
 		{
-			printf_s("[DEBUG] SO_RCVBUF change error: %d\n", GetLastError());
+			printf_s( "[DEBUG] SO_RCVBUF change error: %d\n", GetLastError() );
 			resultOk = false;
 			break;
 		}
 
-		int addrlen = sizeof(SOCKADDR_IN);
-		if (SOCKET_ERROR == getpeername(mSocket, (SOCKADDR*)&mClientAddr, &addrlen))
+		int addrlen = sizeof( SOCKADDR_IN );
+		if ( SOCKET_ERROR == getpeername( mSocket, (SOCKADDR*)&mClientAddr, &addrlen ) )
 		{
-			printf_s("[DEBUG] getpeername error: %d\n", GetLastError());
+			printf_s( "[DEBUG] getpeername error: %d\n", GetLastError() );
 			resultOk = false;
 			break;
 		}
 
-		HANDLE handle = CreateIoCompletionPort((HANDLE)mSocket, GIocpManager->GetComletionPort(), (ULONG_PTR)this, 0);
-		if (handle != GIocpManager->GetComletionPort())
-		{
-			printf_s("[DEBUG] CreateIoCompletionPort error: %d\n", GetLastError());
-			resultOk = false;
-			break;
-		}
-
-	} while (false);
-
-
-	if (!resultOk)
+	} while ( false );
+	
+	if ( !resultOk )
 	{
-		DisconnectRequest(DR_ONCONNECT_ERROR);
+		DisconnectRequest( DR_ONCONNECT_ERROR );
 		return;
 	}
 
-	printf_s("[DEBUG] Client Connected: IP=%s, PORT=%d\n", inet_ntoa(mClientAddr.sin_addr), ntohs(mClientAddr.sin_port));
-
-	if (false == PreRecv())
+	if ( false == PreRecv() )
 	{
-		printf_s("[DEBUG] PreRecv error: %d\n", GetLastError());
+		printf_s( "[DEBUG] PreRecv error: %d\n", GetLastError() );
 	}
-}
 
+	FastSpinlockGuard criticalSection( mBufferLock );
+
+	char* temp = new char[4096];
+	ZeroMemory( temp, sizeof( char ) * 4096 );
+	for ( size_t i = 0; i < 4095; ++i )
+	{
+		temp[i] = static_cast<char>( mSocket );
+	}
+
+	temp[4095] = '\0';
+
+	char* bufferStart = mBuffer.GetBuffer();
+	memcpy( bufferStart, temp, mBuffer.GetContiguiousBytes() );
+	mBuffer.Commit( mBuffer.GetContiguiousBytes() );
+	
+	OverlappedSendContext* sendContext = new OverlappedSendContext( this );
+
+	DWORD sendbytes = 0;
+	DWORD flags = 0;
+	sendContext->mWsaBuf.len = 4096;
+	sendContext->mWsaBuf.buf = mBuffer.GetBuffer();
+
+	delete[] temp;
+
+	/// start async send
+	if ( SOCKET_ERROR == WSASend( mSocket, &sendContext->mWsaBuf, 1, &sendbytes, flags, (LPWSAOVERLAPPED)sendContext, NULL ) )
+	{
+		if ( WSAGetLastError() != WSA_IO_PENDING )
+		{
+			DeleteIoContext( sendContext );
+			printf_s( "ClientSession::PostSend Error : %d\n", GetLastError() );
+		}
+	}
+
+	GIocpManager->IncreaseConnectCount();
+}
 
 void ClientSession::DisconnectRequest(DisconnectReason dr)
 {
@@ -217,7 +265,7 @@ bool ClientSession::PostRecv()
 		if (WSAGetLastError() != WSA_IO_PENDING)
 		{
 			DeleteIoContext(recvContext);
-			printf_s("ClientSession::PostRecv Error : %d\n", GetLastError());
+			// printf_s("ClientSession::PostRecv Error : %d\n", GetLastError());
 			return false;
 		}
 			
@@ -231,6 +279,7 @@ void ClientSession::RecvCompletion(DWORD transferred)
 	FastSpinlockGuard criticalSection(mBufferLock);
 
 	mBuffer.Commit(transferred);
+	LRecvCount += transferred;
 }
 
 bool ClientSession::PostSend()
@@ -271,8 +320,8 @@ void ClientSession::SendCompletion(DWORD transferred)
 	FastSpinlockGuard criticalSection(mBufferLock);
 
 	mBuffer.Remove(transferred);
+	LSendCount += transferred;
 }
-
 
 void ClientSession::AddRef()
 {
@@ -317,8 +366,8 @@ void DeleteIoContext(OverlappedIOContext* context)
 		delete static_cast<OverlappedDisconnectContext*>(context);
 		break;
 
-	case IO_ACCEPT:
-		delete static_cast<OverlappedAcceptContext*>(context);
+	case IO_CONNECT:
+		delete static_cast<OverlappedConnectContext*>(context);
 		break;
 
 	default:

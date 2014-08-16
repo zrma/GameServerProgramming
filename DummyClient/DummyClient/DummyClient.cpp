@@ -29,21 +29,19 @@ int _tmain(int argc, _TCHAR* argv[])
 	if ( false == GIocpManager->StartIoThreads() )
 		return -1;
 
-	printf_s( "Host      : \n" );
-	printf_s( "Port      : \n" );
-	printf_s( "Thread    : \n" );
-	printf_s( "Sessions  : \n" );
-	printf_s( "Session's buffer size : \n" );
-	printf_s( "TCP_NODELY    : \n" );
-	printf_s( "Time (seconds): \n" );
+// 	printf_s( "Host      : \n" );
+// 	printf_s( "Port      : \n" );
+// 	printf_s( "Thread    : \n" );
+// 	printf_s( "Sessions  : \n" );
+// 	printf_s( "Session's buffer size : \n" );
+// 	printf_s( "Time (seconds): \n" );
 
-	GIocpManager->StartAccept(); ///< block here...
-
+	GIocpManager->StartConnect();
 	GIocpManager->Finalize();
 
-	printf_s( "Total sessions connected : \n" );
-	printf_s( "Total bytes written      : \n" );
-	printf_s( "Total bytes read         : \n" );
+	printf_s( "Total sessions connected : %ld \n", GIocpManager->GetConnectCount() );
+	printf_s( "Total bytes written      : %lld \n", GIocpManager->GetSendCount() );
+	printf_s( "Total bytes read         : %lld \n", GIocpManager->GetRecvCount() );
 
 	delete GIocpManager;
 	delete GSessionManager;

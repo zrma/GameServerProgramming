@@ -14,7 +14,7 @@ enum IOType
 	IO_SEND,
 	IO_RECV,
 	IO_RECV_ZERO,
-	IO_ACCEPT,
+	IO_CONNECT,
 	IO_DISCONNECT
 } ;
 
@@ -59,6 +59,13 @@ struct OverlappedPreRecvContext : public OverlappedIOContext, public ObjectPool<
 	}
 };
 
+struct OverlappedConnectContext: public OverlappedIOContext, public ObjectPool < OverlappedConnectContext >
+{
+	OverlappedConnectContext( ClientSession* owner ): OverlappedIOContext( owner, IO_CONNECT )
+	{
+	}
+};
+
 struct OverlappedDisconnectContext : public OverlappedIOContext, public ObjectPool<OverlappedDisconnectContext>
 {
 	OverlappedDisconnectContext(ClientSession* owner, DisconnectReason dr) 
@@ -68,17 +75,10 @@ struct OverlappedDisconnectContext : public OverlappedIOContext, public ObjectPo
 	DisconnectReason mDisconnectReason;
 };
 
-struct OverlappedAcceptContext : public OverlappedIOContext, public ObjectPool<OverlappedAcceptContext>
-{
-	OverlappedAcceptContext(ClientSession* owner) : OverlappedIOContext(owner, IO_ACCEPT)
-	{}
-};
-
-
 void DeleteIoContext(OverlappedIOContext* context) ;
 
 
-class ClientSession : public PooledAllocatable
+class ClientSession: public PooledAllocatable
 {
 public:
 	ClientSession();
@@ -88,32 +88,31 @@ public:
 
 	bool	IsConnected() const { return !!mConnected; }
 
-	bool	PostAccept();
-	void	AcceptCompletion();
+	bool	PostConnect();
 
-	bool	PreRecv() ; ///< zero byte recv
+	void	ConnectCompletion();
+
+	bool	PreRecv(); ///< zero byte recv
 
 	bool	PostRecv();
-	void	RecvCompletion(DWORD transferred);
+	void	RecvCompletion( DWORD transferred );
 
 	bool	PostSend();
-	void	SendCompletion(DWORD transferred);
-	
-	void	DisconnectRequest(DisconnectReason dr);
-	void	DisconnectCompletion(DisconnectReason dr);
-	
+	void	SendCompletion( DWORD transferred );
+
+	void	DisconnectRequest( DisconnectReason dr );
+	void	DisconnectCompletion( DisconnectReason dr );
+
 	void	AddRef();
 	void	ReleaseRef();
 
-	void	SetSocket(SOCKET sock) { mSocket = sock; }
-	SOCKET	GetSocket() const { return mSocket;  }
+	void	SetSocket( SOCKET sock ) { mSocket = sock; }
+	SOCKET	GetSocket() const { return mSocket; }
 
 private:
-	
-	SOCKET			mSocket ;
+	SOCKET			mSocket;
+	SOCKADDR_IN		mClientAddr;
 
-	SOCKADDR_IN		mClientAddr ;
-		
 	FastSpinlock	mBufferLock;
 
 	CircularBuffer	mBuffer;
@@ -122,7 +121,4 @@ private:
 	volatile long	mConnected;
 
 	friend class SessionManager;
-} ;
-
-
-
+};

@@ -85,7 +85,7 @@ void FastSpinlock::EnterReadLock()
 		// else
 			// mLockFlag 원복
 				
-		if ( ( InterlockedAdd( &mLockFlag, 1 ) & LF_WRITE_FLAG ) != LF_WRITE_FLAG )
+		if ( ( InterlockedAdd( &mLockFlag, 1 ) & LF_WRITE_MASK ) != LF_WRITE_FLAG )
 		{
 			return;
 		}

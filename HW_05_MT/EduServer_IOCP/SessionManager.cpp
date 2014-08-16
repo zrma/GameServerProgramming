@@ -62,6 +62,7 @@ bool SessionManager::AcceptSessions()
 
 		++mCurrentIssueCount;
 
+		newClient->SessionReset();
 		newClient->AddRef(); ///< refcount +1 for issuing 
 		
 		if (false == newClient->PostAccept())
