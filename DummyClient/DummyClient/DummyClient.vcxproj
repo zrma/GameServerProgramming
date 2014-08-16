@@ -81,23 +81,34 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CircularBuffer.h" />
+    <ClInclude Include="ClientSession.h" />
+    <ClInclude Include="DummyClient.h" />
     <ClInclude Include="Exception.h" />
+    <ClInclude Include="FastSpinlock.h" />
+    <ClInclude Include="IocpManager.h" />
     <ClInclude Include="MemoryPool.h" />
     <ClInclude Include="ObjectPool.h" />
+    <ClInclude Include="SessionManager.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="ThreadLocal.h" />
     <ClInclude Include="TypeTraits.h" />
     <ClInclude Include="XTL.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CircularBuffer.cpp" />
+    <ClCompile Include="ClientSession.cpp" />
     <ClCompile Include="DummyClient.cpp" />
     <ClCompile Include="Exception.cpp" />
+    <ClCompile Include="FastSpinlock.cpp" />
+    <ClCompile Include="IocpManager.cpp" />
     <ClCompile Include="MemoryPool.cpp" />
+    <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ThreadLocal.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
