@@ -150,16 +150,18 @@ void ClientSession::ConnectCompletion()
 	FastSpinlockGuard criticalSection( mBufferLock );
 
 	char* temp = new char[4096];
+	
 	ZeroMemory( temp, sizeof( char ) * 4096 );
 	for ( size_t i = 0; i < 4095; ++i )
 	{
-		temp[i] = static_cast<char>( mSocket );
+		temp[i] = 'a' + ( mSocket % 26 );
 	}
 
 	temp[4095] = '\0';
 
 	char* bufferStart = mBuffer.GetBuffer();
-	memcpy( bufferStart, temp, mBuffer.GetContiguiousBytes() );
+	memcpy( bufferStart, temp, 4096 );
+	
 	mBuffer.Commit( mBuffer.GetContiguiousBytes() );
 	
 	OverlappedSendContext* sendContext = new OverlappedSendContext( this );
@@ -273,6 +275,11 @@ bool ClientSession::PostRecv()
 void ClientSession::RecvCompletion(DWORD transferred)
 {
 	FastSpinlockGuard criticalSection(mBufferLock);
+
+	if ( *( mBuffer.GetBuffer() ) != ( 'a' + (mSocket % 26) ) )
+	{
+		printf_s( "다른 데이터가 왔다! %c / %c \n", *( mBuffer.GetBuffer() ), 'a' + mSocket % 26 );
+	}
 
 	mBuffer.Commit(transferred);
 	LRecvCount += transferred;
