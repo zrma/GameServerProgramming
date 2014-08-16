@@ -23,7 +23,7 @@ public:
 		// http://stackoverflow.com/questions/17131768/how-to-directly-bind-member-function-to-stdfunction-in-visual-studio-11
 		// http://en.cppreference.com/w/cpp/utility/functional/bind
 		// bind to a member function 참조!
-		return std::bind( memfunc, static_cast<T*>( this ), std::forward<Args>( args )... )();
+		return std::bind( memfunc, static_cast<T*>(this), std::forward<Args>( args )... )();
 	}
 	
 	void EnterLock() { mLock.EnterWriteLock(); }
