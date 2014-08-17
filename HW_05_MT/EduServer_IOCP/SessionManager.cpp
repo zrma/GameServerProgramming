@@ -35,9 +35,6 @@ void SessionManager::PrepareSessions()
 }
 
 
-
-
-
 void SessionManager::ReturnClientSession(ClientSession* client)
 {
 	FastSpinlockGuard guard(mLock);

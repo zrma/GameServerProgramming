@@ -5,6 +5,7 @@
 #include "IocpManager.h"
 #include "SessionManager.h"
 #include "FastSpinlock.h"
+#include "DummyClient.h"
 
 OverlappedIOContext::OverlappedIOContext(ClientSession* owner, IOType ioType) 
 : mSessionObject(owner), mIoType(ioType)
@@ -14,7 +15,7 @@ OverlappedIOContext::OverlappedIOContext(ClientSession* owner, IOType ioType)
 	mSessionObject->AddRef();
 }
 
-ClientSession::ClientSession() : mBuffer(BUFSIZE), mConnected(0), mRefCount(0)
+ClientSession::ClientSession() : mBuffer(BUFFER_SIZE), mConnected(0), mRefCount(0)
 , mBufferLock(LO_LUGGAGE_CLASS)
 {
 	memset(&mClientAddr, 0, sizeof(SOCKADDR_IN));
@@ -73,14 +74,24 @@ bool ClientSession::PostConnect()
 	connectContext->mWsaBuf.len = 0;
 	connectContext->mWsaBuf.buf = nullptr;
 	
+	if ( SERVER_PORT <= 4000 || SERVER_PORT > 10000 )
+	{
+		SERVER_PORT = 9001;
+	}
+
+	if ( HOST_NAME.length() == 0 )
+	{
+		HOST_NAME = "127.0.0.1";
+	}
+
 	sockaddr_in addr;
 	ZeroMemory( &addr, sizeof( addr ) );
 	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
-	addr.sin_port = htons( 9001 );
+	addr.sin_addr.s_addr = inet_addr( HOST_NAME.c_str() );
+	addr.sin_port = htons( SERVER_PORT );
 
 	if ( FALSE == IocpManager::ConnectEx( mSocket, (SOCKADDR*)&addr, sizeof( addr ), 
-		GIocpManager->mAcceptBuf, 0, &bytes, (LPOVERLAPPED)connectContext ) )
+		GIocpManager->mConnectBuf, 0, &bytes, (LPOVERLAPPED)connectContext ) )
 	{
 		if ( WSAGetLastError() != WSA_IO_PENDING )
 		{
@@ -116,11 +127,15 @@ void ClientSession::ConnectCompletion()
 		}
 
 		int opt = 1;
-		if ( SOCKET_ERROR == setsockopt( mSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof( int ) ) )
+		if ( NO_DELAY )
 		{
-			printf_s( "[DEBUG] TCP_NODELAY error: %d\n", GetLastError() );
-			resultOk = false;
-			break;
+			int opt = 1;
+			if ( SOCKET_ERROR == setsockopt( mSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof( int ) ) )
+			{
+				printf_s( "[DEBUG] TCP_NODELAY error: %d\n", GetLastError() );
+				resultOk = false;
+				break;
+			}
 		}
 
 		opt = 0;
@@ -149,27 +164,37 @@ void ClientSession::ConnectCompletion()
 
 	FastSpinlockGuard criticalSection( mBufferLock );
 
-	char* temp = new char[4096];
-	
-	ZeroMemory( temp, sizeof( char ) * 4096 );
-	for ( size_t i = 0; i < 4095; ++i )
+	if ( BUFFER_SIZE <= 0 || BUFFER_SIZE > BUFSIZE )
 	{
-		temp[i] = 'a' + ( mSocket % 26 );
+		BUFFER_SIZE = 4096;
 	}
 
-	temp[4095] = '\0';
+	char* temp = new char[BUFFER_SIZE];
+	
+	ZeroMemory( temp, sizeof( char ) * BUFFER_SIZE );
+	for ( int i = 0; i < BUFFER_SIZE - 1; ++i )
+	{
+		if ( i % 2 == 0 )
+		{
+			temp[i] = 'a' + ( mSocket % 26 );
+		}
+	}
+
+	temp[BUFFER_SIZE - 1] = '\0';
 
 	char* bufferStart = mBuffer.GetBuffer();
-	memcpy( bufferStart, temp, 4096 );
-	
-	mBuffer.Commit( mBuffer.GetContiguiousBytes() );
-	
+	memcpy( bufferStart, temp, BUFFER_SIZE );
+
+	mBuffer.Commit( BUFFER_SIZE );
+		
+	CRASH_ASSERT( 0 != mBuffer.GetContiguiousBytes() );
+		
 	OverlappedSendContext* sendContext = new OverlappedSendContext( this );
 
 	DWORD sendbytes = 0;
 	DWORD flags = 0;
-	sendContext->mWsaBuf.len = 4096;
-	sendContext->mWsaBuf.buf = mBuffer.GetBuffer();
+	sendContext->mWsaBuf.len = (ULONG)mBuffer.GetContiguiousBytes();
+	sendContext->mWsaBuf.buf = mBuffer.GetBufferStart();
 
 	delete[] temp;
 
@@ -276,13 +301,15 @@ void ClientSession::RecvCompletion(DWORD transferred)
 {
 	FastSpinlockGuard criticalSection(mBufferLock);
 
-	if ( *( mBuffer.GetBuffer() ) != ( 'a' + (mSocket % 26) ) )
+	if ( *( mBuffer.GetBuffer() ) != ( 'a' + ( mSocket % 26 ) ) )
 	{
 		printf_s( "다른 데이터가 왔다! %c / %c \n", *( mBuffer.GetBuffer() ), 'a' + mSocket % 26 );
 	}
 
 	mBuffer.Commit(transferred);
 	LRecvCount += transferred;
+
+	mBuffer.GetBuffer();
 }
 
 bool ClientSession::PostSend()

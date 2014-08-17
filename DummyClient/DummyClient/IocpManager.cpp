@@ -12,9 +12,8 @@ IocpManager* GIocpManager = nullptr;
 
 LPFN_CONNECTEX IocpManager::mFnConnectEx = nullptr;
 LPFN_DISCONNECTEX IocpManager::mFnDisconnectEx = nullptr;
-LPFN_ACCEPTEX IocpManager::mFnAcceptEx = nullptr;
 
-char IocpManager::mAcceptBuf[64] = { 0, };
+char IocpManager::mConnectBuf[64] = { 0, };
 
 
 BOOL IocpManager::ConnectEx( SOCKET hSocket, const struct sockaddr *name, int nameLen, 
@@ -26,13 +25,6 @@ BOOL IocpManager::ConnectEx( SOCKET hSocket, const struct sockaddr *name, int na
 BOOL IocpManager::DisconnectEx( SOCKET hSocket, LPOVERLAPPED lpOverlapped, DWORD dwFlags, DWORD reserved )
 {
 	return mFnDisconnectEx(hSocket, lpOverlapped, dwFlags, reserved);
-}
-
-BOOL IocpManager::AcceptEx( SOCKET sListenSocket, SOCKET sAcceptSocket, PVOID lpOutputBuffer, DWORD dwReceiveDataLength,
-	DWORD dwLocalAddressLength, DWORD dwRemoteAddressLength, LPDWORD lpdwBytesReceived, LPOVERLAPPED lpOverlapped)
-{
-	return mFnAcceptEx(sListenSocket, sAcceptSocket, lpOutputBuffer, dwReceiveDataLength,
-		dwLocalAddressLength, dwRemoteAddressLength, lpdwBytesReceived, lpOverlapped);
 }
 
 IocpManager::IocpManager() : mCompletionPort(NULL), mIoThreadCount(2)
@@ -49,7 +41,15 @@ bool IocpManager::Initialize()
 	/// set num of I/O threads
 	SYSTEM_INFO si;
 	GetSystemInfo(&si);
-	mIoThreadCount = si.dwNumberOfProcessors;
+
+	if ( THREAD_COUNT <= 0 || THREAD_COUNT > MAX_IO_THREAD )
+	{
+		mIoThreadCount = si.dwNumberOfProcessors;
+	}
+	else
+	{
+		mIoThreadCount = THREAD_COUNT;
+	}
 	
 	/// winsock initializing
 	WSADATA wsa;
@@ -96,12 +96,7 @@ bool IocpManager::Initialize()
 	if ( SOCKET_ERROR == WSAIoctl( mListenSocket, SIO_GET_EXTENSION_FUNCTION_POINTER,
 		&guidConnectEx, sizeof( GUID ), &mFnConnectEx, sizeof( LPFN_CONNECTEX ), &bytes, NULL, NULL ) )
 		return false;
-
-	GUID guidAcceptEx = WSAID_ACCEPTEX;
-	if ( SOCKET_ERROR == WSAIoctl( mListenSocket, SIO_GET_EXTENSION_FUNCTION_POINTER,
-		&guidAcceptEx, sizeof( GUID ), &mFnAcceptEx, sizeof( LPFN_ACCEPTEX ), &bytes, NULL, NULL ) )
-		return false;
-
+	
 	/// make session pool
 	GSessionManager->PrepareSessions();
 
@@ -149,7 +144,12 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 
 	DWORD startTime = timeGetTime();
 
-	while ( timeGetTime() - startTime < 10000 )
+	if ( TIME <= 0 || TIME > 100000 )
+	{
+		TIME = 60;
+	}
+
+	while ( timeGetTime() - startTime < static_cast<UINT>(TIME * 1000) )
 	{
 		/// IOCP 작업 돌리기
 		DWORD dwTransferred = 0;

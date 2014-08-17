@@ -11,7 +11,7 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* exceptionInfo)
 
 	/// dump file 남기자.
 
-	HANDLE hFile = CreateFileA("EasyServer_minidump.dmp", GENERIC_READ | GENERIC_WRITE, 
+	HANDLE hFile = CreateFileA("DummyClient.dmp", GENERIC_READ | GENERIC_WRITE, 
 		0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL ) ; 
 
 	if ( ( hFile != NULL ) && ( hFile != INVALID_HANDLE_VALUE ) ) 

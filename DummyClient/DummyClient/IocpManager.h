@@ -37,16 +37,13 @@ public:
 	int	GetIoThreadCount()		{ return mIoThreadCount;  }
 	void DecreaseThreadCount();
 	
-	static char mAcceptBuf[64];
+	static char mConnectBuf[64];
 	static LPFN_CONNECTEX mFnConnectEx;
 	static LPFN_DISCONNECTEX mFnDisconnectEx;
-	static LPFN_ACCEPTEX mFnAcceptEx;
 	
 	static BOOL ConnectEx( SOCKET hSocket, const struct sockaddr *name, int nameLen,
 						   PVOID lpSendBuffer, DWORD dwSendDataLength, LPDWORD lpdwBytesSent, LPOVERLAPPED lpOverlapped );
 	static BOOL DisconnectEx( SOCKET hSocket, LPOVERLAPPED lpOverlapped, DWORD dwFlags, DWORD reserved );
-	static BOOL AcceptEx( SOCKET sListenSocket, SOCKET sAcceptSocket, PVOID lpOutputBuffer, DWORD dwReceiveDataLength,
-				   DWORD dwLocalAddressLength, DWORD dwRemoteAddressLength, LPDWORD lpdwBytesReceived, LPOVERLAPPED lpOverlapped );
 private:
 
 	static unsigned int WINAPI IoWorkerThread(LPVOID lpParam);

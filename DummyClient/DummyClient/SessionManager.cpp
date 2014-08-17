@@ -26,6 +26,11 @@ void SessionManager::PrepareSessions()
 {
 	CRASH_ASSERT(LThreadType == THREAD_MAIN);
 
+	if ( MAX_CONNECTION <= 0 || MAX_CONNECTION > 1000 )
+	{
+		MAX_CONNECTION = 1000;
+	}
+
 	for (int i = 0; i < MAX_CONNECTION; ++i)
 	{
 		ClientSession* client = xnew<ClientSession>();

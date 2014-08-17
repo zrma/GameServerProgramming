@@ -237,7 +237,7 @@ bool ClientSession::PostRecv()
 void ClientSession::RecvCompletion(DWORD transferred)
 {
 	FastSpinlockGuard criticalSection(mBufferLock);
-
+	
 	mBuffer.Commit(transferred);
 }
 
