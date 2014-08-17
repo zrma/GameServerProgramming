@@ -70,9 +70,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	delete GIocpManager;
 	delete GSessionManager;
 	delete GMemoryPool;
-
-	getchar();
-
+	
 	return 0;
 }
 

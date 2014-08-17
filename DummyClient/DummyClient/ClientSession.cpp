@@ -174,10 +174,7 @@ void ClientSession::ConnectCompletion()
 	ZeroMemory( temp, sizeof( char ) * BUFFER_SIZE );
 	for ( int i = 0; i < BUFFER_SIZE - 1; ++i )
 	{
-		if ( i % 2 == 0 )
-		{
-			temp[i] = 'a' + ( mSocket % 26 );
-		}
+		temp[i] = 'a' + ( mSocket % 26 );
 	}
 
 	temp[BUFFER_SIZE - 1] = '\0';
