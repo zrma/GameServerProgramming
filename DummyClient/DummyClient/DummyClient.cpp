@@ -63,9 +63,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	GIocpManager->StartConnect();
 	GIocpManager->Finalize();
 
-	printf_s( "Total sessions connected : %ld \n", GIocpManager->GetConnectCount() );
-	printf_s( "Total bytes written      : %lld \n", GIocpManager->GetSendCount() );
-	printf_s( "Total bytes read         : %lld \n", GIocpManager->GetRecvCount() );
+	printf_s( "Total sessions connected : %ld \n", GSessionManager->GetAllSessionConnectCount() );
+	printf_s( "Total bytes written      : %lld \n", GSessionManager->GetAllSessionSendBytes() );
+	printf_s( "Total bytes read         : %lld \n", GSessionManager->GetAllSessionRecvBytes() );
 
 	delete GIocpManager;
 	delete GSessionManager;

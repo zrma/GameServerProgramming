@@ -22,20 +22,7 @@ public:
 	void StartAccept();
 	void StartConnect();
 
-	long long GetSendCount() { return mSendCount; }
-	long long GetRecvCount() { return mRecvCount; }
-	void IncreaseSendCount( long count );
-	void IncreaseRecvCount( long count );
-
-	long GetConnectCount() { return mConnectCount; }
-	void IncreaseConnectCount()
-	{
-		InterlockedIncrement( &mConnectCount );
-	}
-	
 	HANDLE GetComletionPort()	{ return mCompletionPort; }
-	int	GetIoThreadCount()		{ return mIoThreadCount;  }
-	void DecreaseThreadCount();
 	
 	static char mConnectBuf[64];
 	static LPFN_CONNECTEX mFnConnectEx;
@@ -56,13 +43,10 @@ private:
 
 	HANDLE	mCompletionPort;
 	volatile long	mIoThreadCount;
-
-	volatile long long	mSendCount;
-	volatile long long	mRecvCount;
-
-	volatile long	mConnectCount;
-
+		
 	SOCKET	mListenSocket;
+
+	HANDLE*	mThreadHandle = nullptr;
 
 	FastSpinlock	mLock;
 };

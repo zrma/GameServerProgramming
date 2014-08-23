@@ -6,7 +6,8 @@
 #include "SessionManager.h"
 #include "DummyClient.h"
 
-#define GQCS_TIMEOUT	20 // INFINITE
+#define GQCS_TIMEOUT			20 // INFINITE
+#define THREAD_QUIT_KEY		9999
 
 IocpManager* GIocpManager = nullptr;
 
@@ -34,6 +35,15 @@ IocpManager::IocpManager() : mCompletionPort(NULL), mIoThreadCount(2)
 
 IocpManager::~IocpManager()
 {
+	if ( mThreadHandle && mIoThreadCount > 0 )
+	{
+		for ( int i = 0; i < mIoThreadCount; ++i )
+		{
+			CloseHandle( mThreadHandle[i] );
+		}
+
+		delete[] mThreadHandle;
+	}
 }
 
 bool IocpManager::Initialize()
@@ -106,25 +116,46 @@ bool IocpManager::Initialize()
 bool IocpManager::StartIoThreads()
 {
 	/// I/O Thread
+	if ( mIoThreadCount <= 0 )
+	{
+		return false;
+	}
+
+	mThreadHandle = new HANDLE[mIoThreadCount];
+
 	for (int i = 0; i < mIoThreadCount; ++i)
 	{
 		DWORD dwThreadId;
-		HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, IoWorkerThread, (LPVOID)(i+1), 0, (unsigned int*)&dwThreadId);
-		if (hThread == NULL)
+		mThreadHandle[i] = (HANDLE)_beginthreadex( NULL, 0, IoWorkerThread, (LPVOID)( i + 1 ), 0, (unsigned int*)&dwThreadId );
+		if ( mThreadHandle[i] == NULL )
 			return false;
 	}
 
 	return true;
 }
 
-
 void IocpManager::StartConnect()
 {
+	DWORD startTime = timeGetTime();
+
+	if ( TIME <= 0 || TIME > 100000 )
+	{
+		TIME = 60;
+	}
+	
 	// connect
-	while ( GSessionManager->ConnectSessions() && mIoThreadCount > 0 )
+	while ( GSessionManager->ConnectSessions() && 
+			timeGetTime() - startTime < static_cast<UINT>( TIME * 1000 ) )
 	{
 		Sleep( 100 );
 	}
+
+	for ( int i = 0; i < mIoThreadCount; ++i )
+	{
+		PostQueuedCompletionStatus( mCompletionPort, 0, THREAD_QUIT_KEY, NULL );
+	}
+
+	WaitForMultipleObjects( mIoThreadCount, mThreadHandle, TRUE, INFINITE );
 }
 
 void IocpManager::Finalize()
@@ -141,15 +172,8 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 	LIoThreadId = reinterpret_cast<int>(lpParam);
 
 	HANDLE hComletionPort = GIocpManager->GetComletionPort();
-
-	DWORD startTime = timeGetTime();
-
-	if ( TIME <= 0 || TIME > 100000 )
-	{
-		TIME = 60;
-	}
-
-	while ( timeGetTime() - startTime < static_cast<UINT>(TIME * 1000) )
+	
+	while ( true )
 	{
 		/// IOCP 작업 돌리기
 		DWORD dwTransferred = 0;
@@ -157,6 +181,11 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 		ULONG_PTR completionKey = 0;
 
 		int ret = GetQueuedCompletionStatus(hComletionPort, &dwTransferred, (PULONG_PTR)&completionKey, (LPOVERLAPPED*)&context, GQCS_TIMEOUT);
+
+		if ( completionKey == THREAD_QUIT_KEY )
+		{
+			break;
+		}
 
 		ClientSession* theClient = context ? context->mSessionObject : nullptr ;
 		
@@ -226,28 +255,7 @@ unsigned int WINAPI IocpManager::IoWorkerThread(LPVOID lpParam)
 		DeleteIoContext(context);
 	}
 
-	GIocpManager->DecreaseThreadCount();
-	GIocpManager->IncreaseSendCount( LSendCount );
-	GIocpManager->IncreaseRecvCount( LRecvCount );
-
 	return 0;
-}
-
-void IocpManager::IncreaseSendCount( long count )
-{
-	FastSpinlockGuard criticalSection( mLock ); 
-	InterlockedAdd64( &mSendCount, count );
-}
-
-void IocpManager::IncreaseRecvCount( long count )
-{
-	InterlockedAdd64( &mRecvCount, count );
-}
-
-void IocpManager::DecreaseThreadCount()
-{
-	FastSpinlockGuard criticalSection( mLock );
-	InterlockedDecrement( &mIoThreadCount );
 }
 
 bool IocpManager::PreReceiveCompletion(ClientSession* client, OverlappedPreRecvContext* context, DWORD dwTransferred)

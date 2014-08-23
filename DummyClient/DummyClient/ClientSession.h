@@ -109,6 +109,10 @@ public:
 	void	SetSocket( SOCKET sock ) { mSocket = sock; }
 	SOCKET	GetSocket() const { return mSocket; }
 
+	long long	GetSendBytes() { return mSendBytes; }
+	long long	GetRecyBytes() { return mRecvBytes; }
+	long		GetConnectCount() { return mUseCount; }
+
 private:
 	SOCKET			mSocket;
 	SOCKADDR_IN		mClientAddr;
@@ -119,6 +123,10 @@ private:
 
 	volatile long	mRefCount;
 	volatile long	mConnected;
+
+	long long		mSendBytes = 0;
+	long long		mRecvBytes = 0;
+	long			mUseCount = 0;
 
 	friend class SessionManager;
 };

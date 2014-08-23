@@ -11,6 +11,3 @@ enum THREAD_TYPE
 
 extern __declspec(thread) int LThreadType;
 extern __declspec(thread) int LIoThreadId;
-
-extern __declspec( thread ) int LSendCount;
-extern __declspec( thread ) int LRecvCount;

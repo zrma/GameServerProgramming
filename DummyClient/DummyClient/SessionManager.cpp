@@ -36,6 +36,7 @@ void SessionManager::PrepareSessions()
 		ClientSession* client = xnew<ClientSession>();
 			
 		mFreeSessionList.push_back(client);
+		mTotalSessionList.push_back(client);
 	}
 }
 
@@ -72,3 +73,40 @@ bool SessionManager::ConnectSessions()
 	
 	return true;
 }
+
+long long SessionManager::GetAllSessionRecvBytes()
+{
+	long long recvBytes = 0;
+
+	for ( auto it : mTotalSessionList )
+	{
+		recvBytes += it->GetRecyBytes();
+	}
+
+	return recvBytes;
+}
+
+long long SessionManager::GetAllSessionSendBytes()
+{
+	long long sendBytes = 0;
+
+	for ( auto it : mTotalSessionList )
+	{
+		sendBytes += it->GetSendBytes();
+	}
+
+	return sendBytes;
+}
+
+long SessionManager::GetAllSessionConnectCount()
+{
+	long connectCount = 0;
+
+	for ( auto it : mTotalSessionList )
+	{
+		connectCount += it->GetConnectCount();
+	}
+
+	return connectCount;
+}
+

@@ -205,7 +205,7 @@ void ClientSession::ConnectCompletion()
 		}
 	}
 
-	GIocpManager->IncreaseConnectCount();
+	++mUseCount;
 }
 
 void ClientSession::DisconnectRequest(DisconnectReason dr)
@@ -304,7 +304,7 @@ void ClientSession::RecvCompletion(DWORD transferred)
 	}
 
 	mBuffer.Commit(transferred);
-	LRecvCount += transferred;
+	mRecvBytes += transferred;
 
 	mBuffer.GetBuffer();
 }
@@ -346,7 +346,7 @@ void ClientSession::SendCompletion(DWORD transferred)
 	FastSpinlockGuard criticalSection(mBufferLock);
 
 	mBuffer.Remove(transferred);
-	LSendCount += transferred;
+	mSendBytes += transferred;
 }
 
 void ClientSession::AddRef()

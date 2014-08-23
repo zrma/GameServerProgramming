@@ -13,16 +13,17 @@ public:
 	~SessionManager();
 
 	void PrepareSessions();
-	
 	bool ConnectSessions();
-
 	void ReturnClientSession(ClientSession* client);
-
 	
+	long long	GetAllSessionRecvBytes();
+	long long	GetAllSessionSendBytes();
+	long		GetAllSessionConnectCount();
 
 private:
 	typedef xlist<ClientSession*>::type ClientList;
 	ClientList	mFreeSessionList;
+	ClientList	mTotalSessionList;
 
 	FastSpinlock mLock;
 
