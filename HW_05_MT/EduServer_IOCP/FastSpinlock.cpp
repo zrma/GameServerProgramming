@@ -85,14 +85,13 @@ void FastSpinlock::EnterReadLock()
 		// else
 			// mLockFlag 원복
 				
-		if ( ( InterlockedAdd( &mLockFlag, 1 ) & LF_WRITE_MASK ) != LF_WRITE_FLAG )
+		// 이렇게 하면 깔끔하다  by sm9
+		if ( ( InterlockedIncrement( &mLockFlag ) & LF_WRITE_MASK ) == 0 )
 		{
 			return;
 		}
-		else
-		{
-			InterlockedAdd( &mLockFlag, -1 );
-		}
+		
+		InterlockedDecrement( &mLockFlag );
 	}
 }
 

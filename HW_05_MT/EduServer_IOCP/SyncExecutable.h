@@ -23,7 +23,9 @@ public:
 		// http://stackoverflow.com/questions/17131768/how-to-directly-bind-member-function-to-stdfunction-in-visual-studio-11
 		// http://en.cppreference.com/w/cpp/utility/functional/bind
 		// bind to a member function 참조!
-		return std::bind( memfunc, static_cast<T*>(this), std::forward<Args>( args )... )();
+		
+		// 바로 실행 할 것이므로 bind가 필요 없다  by sm9
+		return ( static_cast<T*>( this )->*memfunc ) ( std::forward<Args>( args )... );
 	}
 	
 	void EnterLock() { mLock.EnterWriteLock(); }
@@ -58,5 +60,7 @@ void DoSyncAfter(uint32_t after, T instance, F memfunc, Args&&... args)
 
 	//TODO: instance의 memfunc를 bind로 묶어서 LTimer->PushTimerJob() 수행
 	
-	LTimer->PushTimerJob( instance, std::bind( memfunc, instance, std::forward<Args>( args )... ), after );
+	// instance의 형변환을 잊지 말아야 한다!  by sm9
+	LTimer->PushTimerJob( std::static_pointer_cast<SyncExecutable>(instance),
+						  std::bind( memfunc, instance, std::forward<Args>( args )... ), after );
 }
