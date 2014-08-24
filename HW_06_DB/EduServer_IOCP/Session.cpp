@@ -183,17 +183,15 @@ void Session::SendCompletion(DWORD transferred)
 	mSendBuffer.Remove(transferred);
 
 	mSendPendingCount--;
-
-	DbTestFunc();
 }
 
 void Session::RecvCompletion(DWORD transferred)
 {
 	mRecvBuffer.Commit(transferred);
 
-	DbTestFunc();
+	if ( rand() % 1000 == 0 )
+		DbTestFunc();
 }
-
 
 
 void Session::AddRef()
@@ -223,7 +221,5 @@ void Session::EchoBack()
 		return;
 
 	mRecvBuffer.Remove(len);
-
-	DbTestFunc();
 }
 

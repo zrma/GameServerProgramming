@@ -10,11 +10,12 @@
 #include "IocpManager.h"
 #include "DBHelper.h"
 
-
 __declspec(thread) int LThreadType = -1;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	_wsetlocale( LC_ALL, L"korean" );
+
 	LThreadType = THREAD_MAIN;
 
 	/// for dump on crash

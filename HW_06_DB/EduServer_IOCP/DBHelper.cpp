@@ -246,7 +246,7 @@ bool DbHelper::BindParamText(const wchar_t* text)
 void DbHelper::BindResultColumnInt(int* r)
 {
 	SQLLEN len = 0;
-	SQLRETURN ret = SQLBindCol(mCurrentSqlHstmt, mCurrentResultCol++, SQL_C_LONG, r, 4, &len);
+	SQLRETURN ret = SQLBindCol( mCurrentSqlHstmt, mCurrentResultCol++, SQL_C_LONG, r, 4, &len );
 
 	if (SQL_SUCCESS != ret && SQL_SUCCESS_WITH_INFO != ret)
 	{
@@ -269,7 +269,7 @@ void DbHelper::BindResultColumnFloat(float* r)
 void DbHelper::BindResultColumnBool(bool* r)
 {
 	SQLLEN len = 0;
-	SQLRETURN ret = SQLBindCol(mCurrentSqlHstmt, mCurrentResultCol++, SQL_C_TINYINT, r, 1, &len);
+	SQLRETURN ret = SQLBindCol( mCurrentSqlHstmt, mCurrentResultCol++, SQL_C_TINYINT, r, 1, &len );
 
 	if (SQL_SUCCESS != ret && SQL_SUCCESS_WITH_INFO != ret)
 	{

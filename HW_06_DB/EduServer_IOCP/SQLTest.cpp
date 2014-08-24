@@ -8,13 +8,14 @@ void DbTestFunc()
 {
 	{
 		DbHelper dbHelper;
-
+				
 		dbHelper.BindParamText(L"DbTestPlayer");
+		
 		if (dbHelper.Execute(SQL_CreatePlayer))
 		{
 			if (dbHelper.FetchRow())
 			{
-				printf("ok");
+				printf( "Create Player - Ok! \n" );
 			}
 		}
 	}
@@ -36,7 +37,7 @@ void DbTestFunc()
 		{
 			if (dbHelper.FetchRow())
 			{
-				printf("ok");
+				printf( "Update Position - Ok! \n" );
 			}
 		}
 	}
@@ -52,7 +53,7 @@ void DbTestFunc()
 		{
 			if (dbHelper.FetchRow())
 			{
-				printf("ok");
+				printf( "Update Comment - Ok! \n" );
 			}
 		}
 	}
@@ -68,7 +69,7 @@ void DbTestFunc()
 		{
 			if (dbHelper.FetchRow())
 			{
-				printf("ok");
+				printf( "Update Valid - Ok! \n" );
 			}
 		}
 	}
@@ -97,11 +98,11 @@ void DbTestFunc()
 		{
 			if (dbHelper.FetchRow())
 			{
-				printf("\n%ls %f %f %f %d %ls\n", name, x, y, z, valid, comment);
+				printf("\nLoad Player - %ls %f %f %f %d %ls OK! \n", name, x, y, z, valid, comment);
 			}
 		}
 	}
-
+	
 	{
 		DbHelper dbHelper;
 
@@ -112,10 +113,9 @@ void DbTestFunc()
 		{
 			if (dbHelper.FetchRow())
 			{
-				printf("ok");
+				printf( "Delete Player - Ok! \n" );
 			}
 		}
 	}
 
 }
-
