@@ -39,7 +39,14 @@ void Timer::DoTimerJob()
 
 		timerJobElem.mTask();
 
-		timerJobElem.mOwner->LeaveLock();
+		const TimerJobElement& timerJobElem2 = mTimerJobQueue.top();
+
+		if ( &timerJobElem != &timerJobElem2 )
+		{
+			printf_s( "다르다!!!!!! \n" );
+		}
+
+		timerJobElem2.mOwner->LeaveLock();
 
 		mTimerJobQueue.pop();
 	}

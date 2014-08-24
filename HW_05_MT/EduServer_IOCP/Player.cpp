@@ -67,7 +67,7 @@ void Player::OnTick()
 
 void Player::AddBuff(int fromPlayerId, int buffId, int duration)
 {
-	printf_s("I am Buffed [%d]! from Player [%d]\n", buffId, fromPlayerId);
+	// printf_s("I am Buffed [%d]! from Player [%d]\n", buffId, fromPlayerId);
 
 	/// 플레이어의 버프 리스트에 추가
 	mBuffList.insert(std::make_pair(buffId, duration));
@@ -82,7 +82,7 @@ void Player::DecayTickBuff()
 
 		if (it->second <= 0)
 		{
-			printf_s("Player [%d] BUFF [%d] expired\n", mPlayerId, it->first);
+			// printf_s("Player [%d] BUFF [%d] expired\n", mPlayerId, it->first);
 			mBuffList.erase(it++);
 		}
 		else

@@ -45,6 +45,7 @@ bool IocpManager::Initialize()
 	SYSTEM_INFO si;
 	GetSystemInfo(&si);
 	mIoThreadCount = si.dwNumberOfProcessors;
+	mIoThreadCount = 8;
 	
 	/// winsock initializing
 	WSADATA wsa;
