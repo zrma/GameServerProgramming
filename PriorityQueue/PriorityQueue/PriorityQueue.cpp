@@ -32,10 +32,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	const Test& t = queue.top();
 	printf_s( "%d \n", t.mData );
 
-	for ( int i = 30; i < 100; i += 2 )
+	for ( int i = 100; i < 200; i += 2 )
 	{
 		queue.push( Test( i ) );
-		printf_s( "%d \n", t.mData );
+		const Test& t2 = queue.top();
+		printf_s( "%d, %d \n", t.mData, t2.mData );
 	}
 
 	getchar();
