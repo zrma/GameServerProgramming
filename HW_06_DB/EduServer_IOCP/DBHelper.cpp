@@ -214,6 +214,8 @@ bool DbHelper::BindParamBool(bool* param)
 	// SQLRETURN ret = 0; // = SQLBindParameter(...);
 	SQLRETURN ret = SQLBindParameter( mCurrentSqlHstmt, mCurrentBindParam++, SQL_PARAM_INPUT,
 									  SQL_C_TINYINT, SQL_TINYINT, 1, 0, param, 0, NULL );
+	// 3으로 넣을 수 있다.
+	// Why?  실제 bool은 1바이트(0~255까지 가능)이므로 3자리까지 넣을 수 있음  by sm9
 
 	if (SQL_SUCCESS != ret && SQL_SUCCESS_WITH_INFO != ret)
 	{
@@ -259,7 +261,14 @@ void DbHelper::BindResultColumnFloat(float* r)
 	SQLLEN len = 0;
 	//todo: float형 결과 컬럼 바인딩  <- 구현
 	// SQLRETURN ret = 0;
-	SQLRETURN ret = SQLBindCol( mCurrentSqlHstmt, mCurrentResultCol++, SQL_C_FLOAT, r, 15, &len );
+	SQLRETURN ret = SQLBindCol( mCurrentSqlHstmt, mCurrentResultCol++, SQL_C_FLOAT, r, sizeof( float ), &len );
+	// 버퍼 크기 = sizeof( float ) = 4  by sm9
+
+	//////////////////////////////////////////////////////////////////////////
+	// BindParam 은 자리수
+	//
+	// BindCol 은 버퍼 크기(자료형 크기)
+	//////////////////////////////////////////////////////////////////////////
 
 	if (SQL_SUCCESS != ret && SQL_SUCCESS_WITH_INFO != ret)
 	{
