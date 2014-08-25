@@ -183,7 +183,7 @@ bool DbHelper::BindParamInt(int* param)
 	//todo: int형 파라미터 바인딩  <- 구현
 	// SQLRETURN ret = 0; // = SQLBindParameter(...);
 	SQLRETURN ret = SQLBindParameter( mCurrentSqlHstmt, mCurrentBindParam++, SQL_PARAM_INPUT,
-									  SQL_C_LONG, SQL_INTEGER, 4, 0, param, 0, NULL );
+									  SQL_C_LONG, SQL_INTEGER, 10, 0, param, 0, NULL );
 
 	if (SQL_SUCCESS != ret && SQL_SUCCESS_WITH_INFO != ret)
 	{
@@ -253,6 +253,7 @@ void DbHelper::BindResultColumnInt(int* r)
 		PrintSqlStmtError();
 	}
 }
+
 void DbHelper::BindResultColumnFloat(float* r)
 {
 	SQLLEN len = 0;
@@ -276,12 +277,13 @@ void DbHelper::BindResultColumnBool(bool* r)
 		PrintSqlStmtError();
 	}
 }
+
 void DbHelper::BindResultColumnText(wchar_t* text, size_t count)
 {
 	SQLLEN len = 0;
 	//todo: wchar_t*형 결과 컬럼 바인딩  <- 구현
 	// SQLRETURN ret = 0;
-	SQLRETURN ret = SQLBindCol( mCurrentSqlHstmt, mCurrentResultCol++, SQL_C_WCHAR, text, count, &len );
+	SQLRETURN ret = SQLBindCol( mCurrentSqlHstmt, mCurrentResultCol++, SQL_C_WCHAR, text, count * 2, &len );  // 멀티바이트  by sm9
 
 	if (SQL_SUCCESS != ret && SQL_SUCCESS_WITH_INFO != ret)
 	{
