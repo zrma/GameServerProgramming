@@ -126,7 +126,7 @@ bool IocpManager::StartIoThreads()
 	for (int i = 0; i < mIoThreadCount; ++i)
 	{
 		DWORD dwThreadId;
-		mThreadHandle[i] = (HANDLE)_beginthreadex( NULL, 0, IoWorkerThread, (LPVOID)( i + 1 ), 0, (unsigned int*)&dwThreadId );
+		mThreadHandle[i] = (HANDLE)_beginthreadex( NULL, 0, IoWorkerThread, (LPVOID)( i ), 0, (unsigned int*)&dwThreadId );
 		if ( mThreadHandle[i] == NULL )
 			return false;
 	}
